@@ -60,15 +60,13 @@ const clickSoundPaths = Array.from(
 const JUTSU_SOUND_PATH = 'assets/audio/click/jutsu_aktivasyon_sesi.wav';
 const COUNTDOWN_SOUND_PATH = 'assets/audio/ui/sayac_sesi.wav';
 
+const START_SOUND_COUNT = 6;
+
 /** One is picked at random whenever a run is started or retried. */
-const startSoundPaths = [
-  'assets/audio/ui/start_hinata.mp3',
-  'assets/audio/ui/start_itachi.mp3',
-  'assets/audio/ui/start_kakashi.mp3',
-  'assets/audio/ui/start_naruto.mp3',
-  'assets/audio/ui/start_sakura.mp3',
-  'assets/audio/ui/start_sasuke.mp3'
-];
+const startSoundPaths = Array.from(
+  { length: START_SOUND_COUNT },
+  (_, i) => `assets/audio/ui/baslat_ses_${i + 1}.mp3`
+);
 
 const GAMEOVER_SOUND_PATH = 'assets/audio/ui/muhur_bozuldu.mp3';
 

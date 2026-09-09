@@ -77,7 +77,7 @@ Buton sesleri:
 
 | Ne zaman | Ses |
 |---|---|
-| Oyuna Başla / Tekrar Dene | `ui/start_*.mp3` havuzundan rastgele biri |
+| Oyuna Başla / Tekrar Dene | `ui/baslat_ses_*.mp3` havuzundan rastgele biri |
 | Yanlış mühre basınca | kod içinde üretilen hata uğultusu (anında) |
 | "Mühür bozuldu" kartı belirince | `ui/muhur_bozuldu.mp3` (950 ms sonra) |
 
