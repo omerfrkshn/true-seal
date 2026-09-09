@@ -3,6 +3,7 @@
 .panel--game {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(0.45rem, 1.5vh, 0.9rem);
   padding: clamp(0.6rem, 2vw, 1.25rem);
   background: var(--ink-950);
@@ -51,6 +52,7 @@
 .scroll--grid {
   position: relative;
   z-index: 2;
+  min-width: 0;
 }
 
 /* ---- Stage ---- */

@@ -31,6 +31,8 @@
 
   let onGamePanel = false;
   let slideTimer = null;
+  let loadProgress = 0;
+  let loadFailures = 0;
 
   /* ---- title ---- */
 
@@ -224,12 +226,17 @@
 
   /* ---- mute ---- */
 
+  function applyMuteLabels(muted) {
+    const label = I18n.t(muted ? 'game.muteOff' : 'game.muteOn');
+    muteBtn.setAttribute('aria-pressed', String(muted));
+    muteBtn.title = label;
+    muteIcon.textContent = muted ? '◌' : '◉';
+    muteBtn.querySelector('.sr-only').textContent = label;
+  }
+
   function applyMute(next) {
     AudioBus.setMuted(next);
-    muteBtn.setAttribute('aria-pressed', String(next));
-    muteBtn.title = next ? 'Sesi aç' : 'Sesi kapat';
-    muteIcon.textContent = next ? '◌' : '◉';
-    muteBtn.querySelector('.sr-only').textContent = next ? 'Sesi aç' : 'Sesi kapat';
+    applyMuteLabels(next);
     try {
       localStorage.setItem(MUTE_KEY, next ? '1' : '0');
     } catch (err) {
@@ -247,14 +254,36 @@
 
   /* ---- boot ---- */
 
+  function renderLoadingText() {
+    loadingText.textContent = loadFailures
+      ? I18n.t('hero.loadFailed', { n: loadFailures })
+      : I18n.t('hero.loading', { p: loadProgress });
+  }
+
   function setProgress(ratio) {
-    const percent = Math.round(ratio * 100);
-    loadingFill.style.width = `${percent}%`;
-    loadingBar.setAttribute('aria-valuenow', String(percent));
-    loadingText.textContent = `Mühürler hazırlanıyor… %${percent}`;
+    loadProgress = Math.round(ratio * 100);
+    loadingFill.style.width = `${loadProgress}%`;
+    loadingBar.setAttribute('aria-valuenow', String(loadProgress));
+    renderLoadingText();
+  }
+
+  /** Marks the active side of every TR/EN control on the page. */
+  function markLanguage(lang) {
+    document.querySelectorAll('.lang__opt').forEach((btn) => {
+      btn.setAttribute('aria-pressed', String(btn.dataset.lang === lang));
+    });
   }
 
   async function boot() {
+    I18n.onChange((lang) => {
+      markLanguage(lang);
+      applyMuteLabels(AudioBus.isMuted());
+      renderLoadingText();
+    });
+    I18n.init();
+    markLanguage(I18n.get());
+    renderLoadingText();
+
     buildTitle();
     Game.mount({ onExit: () => setActivePanel(false) });
     gamePanel.inert = true;
@@ -280,7 +309,8 @@
     startBtn.disabled = false;
     startBtn.classList.add('is-armed');
     if (failed > 0) {
-      loadingText.textContent = `${failed} dosya yüklenemedi — oyun yine de oynanabilir.`;
+      loadFailures = failed;
+      renderLoadingText();
       loadingText.classList.add('is-warning');
     } else {
       heroStatus.classList.add('is-done');
@@ -293,6 +323,10 @@
   });
 
   backBtn.addEventListener('click', () => setActivePanel(false));
+
+  document.querySelectorAll('.lang__opt').forEach((btn) => {
+    btn.addEventListener('click', () => I18n.set(btn.dataset.lang));
+  });
 
   muteBtn.addEventListener('click', () => {
     AudioBus.unlock();

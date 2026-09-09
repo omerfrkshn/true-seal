@@ -58,22 +58,36 @@ Giriş sırasında süre çubuğu boşalır: yeşil → altın → kırmızı. K
 bir şeyin olduğunda baskı da oluyor. Kombo 2 ve üzerinde ekrana `KOMBO xN`
 şok dalgasıyla çakılıyor, kombo büyüdükçe rengi turuncudan kırmızıya kayıyor.
 
+## Dil
+
+Sağ üstteki **TR / EN** düğmesiyle site tamamen Türkçe veya İngilizce
+kullanılabilir. Düğme hem açılış ekranında hem oyun HUD'unda var; ikisi aynı
+durumu paylaşır. Geçiş oyunu kesmez — seviye ortasında dil değiştirsen bile
+ipuçları, mühür adları ve oyun sonu kartı anında yeniden yazılır.
+
+İlk ziyarette tarayıcı dili Türkçeyse Türkçe, değilse İngilizce açılır; seçim
+sonrasında `localStorage`'da saklanır. Metinler `js/i18n.js` içindeki tek
+sözlükte; statik olanlar `data-i18n` öznitelikleriyle bağlanır.
+
+Mühür adları da çevrilir (Fare/Rat, Öküz/Ox, Tavşan/Hare…), Japonca romaji ve
+katakana ise iki dilde de aynı kalır.
+
 ## Mühürler
 
-| Hayvan | Romaji | Katakana |
-|---|---|---|
-| Fare | Ne | ネ |
-| Öküz | Ushi | ウシ |
-| Kaplan | Tora | トラ |
-| Tavşan | U | ウ |
-| Ejderha | Tatsu | タツ |
-| Yılan | Mi | ミ |
-| At | Uma | ウマ |
-| Koç | Hitsuji | ヒツジ |
-| Maymun | Saru | サル |
-| Kuş | Tori | トリ |
-| Köpek | Inu | イヌ |
-| Yaban Domuzu | I | イ |
+| Hayvan | English | Romaji | Katakana |
+|---|---|---|---|
+| Fare | Rat | Ne | ネ |
+| Öküz | Ox | Ushi | ウシ |
+| Kaplan | Tiger | Tora | トラ |
+| Tavşan | Hare | U | ウ |
+| Ejderha | Dragon | Tatsu | タツ |
+| Yılan | Snake | Mi | ミ |
+| At | Horse | Uma | ウマ |
+| Koç | Ram | Hitsuji | ヒツジ |
+| Maymun | Monkey | Saru | サル |
+| Kuş | Bird | Tori | トリ |
+| Köpek | Dog | Inu | イヌ |
+| Yaban Domuzu | Boar | I | イ |
 
 ## Arka plan görselleri
 
@@ -110,6 +124,7 @@ yok, çıktı dizini reponun kökü.
 index.html
 css/
   base.css        renk/font değişkenleri, reset, iki panelli yatay ray
+  lang.css        TR/EN geçiş düğmesi
   title.css       oyun isminin kontur + dolgu animasyonu
   landing.css     açılış ekranı ve intro'nun zaman çizelgesi
   scroll.css      CSS ile çizilmiş açılmış parşömen çerçevesi
@@ -117,6 +132,7 @@ css/
   game.css        dizi ekranı, süre çubuğu, tekrar butonu, 12 mühür butonu
   overlays.css    geri sayım, tıklama parlaması, puan, kombo, oyun bitti
 js/
+  i18n.js         TR/EN sözlüğü ve dil değiştirme
   seals.js        12 mührün verisi, dosya yolları, geri sayım vuruş anları
   rules.js        zorluk eğrisi, süre limiti, puan formülü
   audio.js        Web Audio veri yolu; hata/kombo/tik sesleri kodda üretilir

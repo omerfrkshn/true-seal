@@ -7,19 +7,36 @@
  *   assets/audio/names/<id>_<romaji lowercased>.wav
  */
 const SEALS = [
-  { id: 'fare', label: 'Fare', romaji: 'Ne', kana: 'ネ' },
-  { id: 'okuz', label: 'Öküz', romaji: 'Ushi', kana: 'ウシ' },
-  { id: 'kaplan', label: 'Kaplan', romaji: 'Tora', kana: 'トラ' },
-  { id: 'tavsan', label: 'Tavşan', romaji: 'U', kana: 'ウ' },
-  { id: 'ejderha', label: 'Ejderha', romaji: 'Tatsu', kana: 'タツ' },
-  { id: 'yilan', label: 'Yılan', romaji: 'Mi', kana: 'ミ' },
-  { id: 'at', label: 'At', romaji: 'Uma', kana: 'ウマ' },
-  { id: 'koc', label: 'Koç', romaji: 'Hitsuji', kana: 'ヒツジ' },
-  { id: 'maymun', label: 'Maymun', romaji: 'Saru', kana: 'サル' },
-  { id: 'kus', label: 'Kuş', romaji: 'Tori', kana: 'トリ' },
-  { id: 'kopek', label: 'Köpek', romaji: 'Inu', kana: 'イヌ' },
-  { id: 'domuz', label: 'Yaban Domuzu', short: 'Domuz', romaji: 'I', kana: 'イ' }
+  { id: 'fare', label: { tr: 'Fare', en: 'Rat' }, romaji: 'Ne', kana: 'ネ' },
+  { id: 'okuz', label: { tr: 'Öküz', en: 'Ox' }, romaji: 'Ushi', kana: 'ウシ' },
+  { id: 'kaplan', label: { tr: 'Kaplan', en: 'Tiger' }, romaji: 'Tora', kana: 'トラ' },
+  { id: 'tavsan', label: { tr: 'Tavşan', en: 'Hare' }, romaji: 'U', kana: 'ウ' },
+  { id: 'ejderha', label: { tr: 'Ejderha', en: 'Dragon' }, romaji: 'Tatsu', kana: 'タツ' },
+  { id: 'yilan', label: { tr: 'Yılan', en: 'Snake' }, romaji: 'Mi', kana: 'ミ' },
+  { id: 'at', label: { tr: 'At', en: 'Horse' }, romaji: 'Uma', kana: 'ウマ' },
+  { id: 'koc', label: { tr: 'Koç', en: 'Ram' }, romaji: 'Hitsuji', kana: 'ヒツジ' },
+  { id: 'maymun', label: { tr: 'Maymun', en: 'Monkey' }, romaji: 'Saru', kana: 'サル' },
+  { id: 'kus', label: { tr: 'Kuş', en: 'Bird' }, romaji: 'Tori', kana: 'トリ' },
+  { id: 'kopek', label: { tr: 'Köpek', en: 'Dog' }, romaji: 'Inu', kana: 'イヌ' },
+  {
+    id: 'domuz',
+    label: { tr: 'Yaban Domuzu', en: 'Boar' },
+    short: { tr: 'Domuz', en: 'Boar' },
+    romaji: 'I',
+    kana: 'イ'
+  }
 ];
+
+/** Full name in the current language. */
+function sealLabel(seal) {
+  return seal.label[I18n.get()] || seal.label.tr;
+}
+
+/** Shorter form for the buttons, where the tiles are narrow. */
+function sealShort(seal) {
+  const short = seal.short && seal.short[I18n.get()];
+  return short || sealLabel(seal);
+}
 
 const sealPaths = {
   png(id) {

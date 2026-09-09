@@ -19,15 +19,6 @@ const Game = (() => {
   const BEST_SCORE_KEY = 'true-seal:rekor-puan';
   const BEST_LEVEL_KEY = 'true-seal:rekor-seviye';
 
-  const HINTS = {
-    idle: 'Diziyi bekle.',
-    countdown: 'Hazır ol…',
-    playback: 'İzle ve ezberle.',
-    input: 'Şimdi aynı sırayla tekrarla.',
-    success: 'Jutsu aktif.',
-    gameover: 'Mühür bozuldu.'
-  };
-
   const el = {};
   const timers = new Set();
   const buttons = new Map();
@@ -45,6 +36,7 @@ const Game = (() => {
   let bestLevel = 0;
   let runToken = 0;
   let countdownSource = null;
+  let lastExpected = null;
   let onExit = () => {};
 
   // Input timer
@@ -112,7 +104,7 @@ const Game = (() => {
 
   function setState(next) {
     state = next;
-    el.hint.textContent = HINTS[next] || '';
+    el.hint.textContent = I18n.t(`hint.${next}`);
     const locked = next !== 'input';
     buttons.forEach((btn) => {
       btn.disabled = locked;
@@ -123,7 +115,7 @@ const Game = (() => {
   function updateHud() {
     el.statLevel.textContent = String(level);
     el.statLength.textContent = String(Rules.lengthFor(level));
-    el.statScore.textContent = score.toLocaleString('tr-TR');
+    el.statScore.textContent = score.toLocaleString(I18n.locale());
     el.comboChip.hidden = combo < 1;
     el.comboValue.textContent = String(combo);
   }
@@ -157,7 +149,7 @@ const Game = (() => {
 
   function showScreenSeal(seal, animate) {
     el.screenImg.src = sealPaths.color(seal.id);
-    el.screenImg.alt = `${seal.label} mührü`;
+    el.screenImg.alt = I18n.t('seal.alt', { seal: sealLabel(seal) });
     el.screenImg.hidden = false;
     if (!animate) return;
     el.screenImg.classList.remove('is-shown');
@@ -214,18 +206,45 @@ const Game = (() => {
   }
 
   function popScore(points) {
-    el.scorePop.textContent = `+${points.toLocaleString('tr-TR')}`;
+    el.scorePop.textContent = `+${points.toLocaleString(I18n.locale())}`;
     el.scorePop.classList.remove('is-firing');
     void el.scorePop.offsetWidth;
     el.scorePop.classList.add('is-firing');
   }
 
   function burstCombo(streak) {
-    el.comboText.textContent = `KOMBO x${streak}`;
+    el.comboText.textContent = I18n.t('cue.combo', { n: streak });
     el.comboBurst.dataset.heat = String(Math.min(streak, 6));
     el.comboBurst.classList.remove('is-firing');
     void el.comboBurst.offsetWidth;
     el.comboBurst.classList.add('is-firing');
+  }
+
+  function renderGameoverBody() {
+    if (!lastExpected) return;
+    const name = `${sealLabel(lastExpected)} (${lastExpected.romaji})`;
+    const [before, after = ''] = I18n.t('over.body').split('{seal}');
+    const strong = document.createElement('strong');
+    strong.textContent = name;
+    el.gameoverBody.replaceChildren(
+      document.createTextNode(before),
+      strong,
+      document.createTextNode(after)
+    );
+  }
+
+  /** Re-renders everything already on screen after a language switch. */
+  function refreshLanguage() {
+    el.hint.textContent = I18n.t(`hint.${state}`);
+    buttons.forEach((btn, id) => {
+      const seal = SEALS.find((item) => item.id === id);
+      btn.setAttribute('aria-label', `${sealLabel(seal)} — ${seal.romaji}`);
+      btn.querySelector('.seal-btn__label').textContent = sealShort(seal);
+    });
+    updateHud();
+    renderGameoverBody();
+    el.gameoverScore.textContent = score.toLocaleString(I18n.locale());
+    el.gameoverBest.textContent = bestScore.toLocaleString(I18n.locale());
   }
 
   /* ---- input clock ---- */
@@ -350,7 +369,7 @@ const Game = (() => {
 
     await sleepUntil(start + COUNTDOWN_CUE_MS);
     if (token !== runToken) return;
-    showOverlay('EZBERLE!', 'is-cue');
+    showOverlay(I18n.t('cue.memorise'), 'is-cue');
 
     await sleepUntil(start + COUNTDOWN_TOTAL_MS);
     if (token !== runToken) return;
@@ -396,7 +415,7 @@ const Game = (() => {
       burstCombo(combo);
       AudioBus.playCombo(combo);
     } else {
-      showOverlay('JUTSU AKTİF', 'is-cue is-jutsu');
+      showOverlay(I18n.t('cue.jutsu'), 'is-cue is-jutsu');
     }
 
     level += 1;
@@ -435,12 +454,14 @@ const Game = (() => {
     el.screen.classList.add('is-failed');
     showScreenSeal(expected, true);
 
+    lastExpected = expected;
+
     later(() => {
-      el.gameoverCorrect.textContent = `${expected.label} (${expected.romaji})`;
+      renderGameoverBody();
       el.gameoverLevel.textContent = String(level);
-      el.gameoverScore.textContent = score.toLocaleString('tr-TR');
+      el.gameoverScore.textContent = score.toLocaleString(I18n.locale());
       el.gameoverCombo.textContent = String(longestCombo);
-      el.gameoverBest.textContent = bestScore.toLocaleString('tr-TR');
+      el.gameoverBest.textContent = bestScore.toLocaleString(I18n.locale());
       el.gameoverRecord.hidden = !isRecord;
       el.gameover.hidden = false;
       el.retryBtn.focus();
@@ -475,7 +496,7 @@ const Game = (() => {
       btn.type = 'button';
       btn.className = 'seal-btn';
       btn.disabled = true;
-      btn.setAttribute('aria-label', `${seal.label} — ${seal.romaji}`);
+      btn.setAttribute('aria-label', `${sealLabel(seal)} — ${seal.romaji}`);
 
       const img = document.createElement('img');
       img.className = 'seal-btn__img';
@@ -484,7 +505,7 @@ const Game = (() => {
 
       const label = document.createElement('span');
       label.className = 'seal-btn__label';
-      label.textContent = seal.short || seal.label;
+      label.textContent = sealShort(seal);
 
       btn.append(img, label);
       btn.addEventListener('click', () => handlePress(seal));
@@ -519,7 +540,7 @@ const Game = (() => {
       flashKana: document.getElementById('flash-kana'),
       flashRomaji: document.getElementById('flash-romaji'),
       gameover: document.getElementById('gameover'),
-      gameoverCorrect: document.getElementById('gameover-correct'),
+      gameoverBody: document.getElementById('gameover-body'),
       gameoverLevel: document.getElementById('gameover-level'),
       gameoverScore: document.getElementById('gameover-score'),
       gameoverCombo: document.getElementById('gameover-combo'),
@@ -540,6 +561,8 @@ const Game = (() => {
     updateReplayUi();
     setState('idle');
 
+    I18n.onChange(refreshLanguage);
+
     el.replayBtn.addEventListener('click', () => replay());
     el.retryBtn.addEventListener('click', () => start());
     el.menuBtn.addEventListener('click', () => {
@@ -550,6 +573,7 @@ const Game = (() => {
 
   function start() {
     el.gameover.hidden = true;
+    lastExpected = null;
     level = 1;
     score = 0;
     combo = 0;

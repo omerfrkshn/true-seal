@@ -1,0 +1,57 @@
+/*
+ * TR / EN switch. One instance sits in the corner of the landing panel, another
+ * in the game HUD, and both stay in sync through the i18n module.
+ */
+
+.lang {
+  display: inline-flex;
+  overflow: hidden;
+  background: var(--veil-soft);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--radius-sm);
+}
+
+.lang__opt {
+  padding: 0.34rem 0.5rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  color: var(--paper-faint);
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.lang__opt + .lang__opt {
+  border-left: 1px solid var(--ink-700);
+}
+
+.lang__opt:hover {
+  color: var(--paper);
+}
+
+.lang__opt[aria-pressed='true'] {
+  color: var(--ink-950);
+  background: var(--chakra);
+}
+
+/* ---- landing corner ---- */
+
+.lang--hero {
+  position: absolute;
+  top: clamp(0.9rem, 3vw, 1.75rem);
+  right: clamp(0.9rem, 3vw, 1.75rem);
+  z-index: 4;
+  opacity: 0;
+}
+
+.is-playing .lang--hero {
+  animation: rise-in 600ms var(--ease-slam) 700ms forwards;
+}
+
+@media (max-width: 420px) {
+  .lang__opt {
+    padding: 0.3rem 0.38rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+  }
+}

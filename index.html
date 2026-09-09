@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/lang.css">
 <link rel="stylesheet" href="css/title.css">
 <link rel="stylesheet" href="css/landing.css">
 <link rel="stylesheet" href="css/scroll.css">
@@ -24,12 +25,17 @@
 
 <div class="track" id="track">
 
-  <section class="panel panel--hero" id="hero-panel" aria-label="Giriş">
+  <section class="panel panel--hero" id="hero-panel" data-i18n-aria="hero.aria">
     <div class="hero__scene" id="hero-scene" aria-hidden="true">
       <div class="hero__art" id="hero-art"></div>
       <canvas class="hero__embers" id="ember-canvas"></canvas>
       <div class="hero__haze" id="hero-haze"></div>
       <div class="hero__torch" id="hero-torch"></div>
+    </div>
+
+    <div class="lang lang--hero" role="group" data-i18n-aria="lang.aria">
+      <button class="lang__opt" type="button" data-lang="tr" aria-pressed="true">TR</button>
+      <button class="lang__opt" type="button" data-lang="en" aria-pressed="false">EN</button>
     </div>
 
     <div class="hero__content" id="hero-content">
@@ -39,40 +45,54 @@
 
       <div class="hero__rule" aria-hidden="true"></div>
 
-      <p class="hero__desc">On iki el mührü. Diziyi ezberle, aynı sırayla ör.</p>
+      <p class="hero__desc" data-i18n="hero.desc">On iki el mührü. Diziyi ezberle, aynı sırayla ör.</p>
 
       <button class="start-btn" id="start-btn" type="button" disabled>
         <span class="start-btn__ring" aria-hidden="true"></span>
         <span class="start-btn__wave" aria-hidden="true"></span>
         <span class="start-btn__plate" aria-hidden="true"></span>
-        <span class="start-btn__label">OYUNA BAŞLA</span>
+        <span class="start-btn__label" data-i18n="hero.start">OYUNA BAŞLA</span>
       </button>
 
       <div class="hero__status" id="hero-status">
-        <div class="loading-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Varlıklar yükleniyor">
+        <div class="loading-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-i18n-aria="hero.loadingAria">
           <div class="loading-bar__fill" id="loading-fill"></div>
         </div>
-        <p class="loading-text" id="loading-text">Mühürler hazırlanıyor… %0</p>
+        <p class="loading-text" id="loading-text"></p>
       </div>
     </div>
   </section>
 
-  <section class="panel panel--game" id="game-panel" aria-label="Oyun alanı">
+  <section class="panel panel--game" id="game-panel" data-i18n-aria="game.aria">
     <div class="game__art" id="game-art" aria-hidden="true"></div>
     <div class="game__stress" aria-hidden="true"></div>
 
     <header class="hud">
-      <button class="hud__btn" id="back-btn" type="button">← Ana Menü</button>
-      <div class="hud__stats">
-        <p class="stat"><span class="stat__key">Seviye</span><span class="stat__val" id="stat-level">1</span></p>
-        <p class="stat"><span class="stat__key">Mühür</span><span class="stat__val" id="stat-length">3</span></p>
-        <p class="stat stat--score"><span class="stat__key">Puan</span><span class="stat__val" id="stat-score">0</span></p>
-        <p class="combo-chip" id="combo-chip" hidden>KOMBO<span class="combo-chip__val" id="combo-value">0</span></p>
-      </div>
-      <button class="hud__btn hud__btn--icon" id="mute-btn" type="button" aria-pressed="false" title="Sesi kapat">
-        <span class="hud__icon" id="mute-icon" aria-hidden="true">◉</span>
-        <span class="sr-only">Sesi kapat</span>
+      <button class="hud__btn" id="back-btn" type="button" data-i18n-aria="game.back">
+        <span aria-hidden="true">←</span>
+        <span class="hud__btn-text" data-i18n="game.back">Ana Menü</span>
       </button>
+
+      <div class="hud__stats">
+        <p class="stat"><span class="stat__key" data-i18n="game.level">Seviye</span><span class="stat__val" id="stat-level">1</span></p>
+        <p class="stat"><span class="stat__key" data-i18n="game.seals">Mühür</span><span class="stat__val" id="stat-length">3</span></p>
+        <p class="stat stat--score"><span class="stat__key" data-i18n="game.score">Puan</span><span class="stat__val" id="stat-score">0</span></p>
+        <p class="combo-chip" id="combo-chip" hidden>
+          <span class="combo-chip__key" data-i18n="game.combo">KOMBO</span>
+          <span class="combo-chip__val" id="combo-value">0</span>
+        </p>
+      </div>
+
+      <div class="hud__right">
+        <div class="lang lang--hud" role="group" data-i18n-aria="lang.aria">
+          <button class="lang__opt" type="button" data-lang="tr" aria-pressed="true">TR</button>
+          <button class="lang__opt" type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+        <button class="hud__btn hud__btn--icon" id="mute-btn" type="button" aria-pressed="false">
+          <span class="hud__icon" id="mute-icon" aria-hidden="true">◉</span>
+          <span class="sr-only"></span>
+        </button>
+      </div>
     </header>
 
     <div class="stage">
@@ -94,9 +114,9 @@
           </div>
         </div>
         <div class="stage__row">
-          <p class="stage__hint" id="stage-hint" role="status">Diziyi bekle.</p>
+          <p class="stage__hint" id="stage-hint" role="status"></p>
           <button class="replay-btn" id="replay-btn" type="button" disabled>
-            Tekrar Göster
+            <span data-i18n="game.replay">Tekrar Göster</span>
             <span class="replay-btn__count" id="replay-count">3</span>
           </button>
         </div>
@@ -107,7 +127,7 @@
       <span class="scroll__rod scroll__rod--left" aria-hidden="true"></span>
       <span class="scroll__rod scroll__rod--right" aria-hidden="true"></span>
       <div class="scroll__paper">
-        <div class="seal-grid" id="seal-grid" role="group" aria-label="El mühürleri"></div>
+        <div class="seal-grid" id="seal-grid" role="group" data-i18n-aria="game.gridAria"></div>
       </div>
     </div>
 
@@ -136,25 +156,25 @@
     <div class="gameover" id="gameover" hidden>
       <div class="gameover__card" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
         <p class="gameover__kanji" aria-hidden="true">解</p>
-        <h2 class="gameover__title" id="gameover-title">MÜHÜR BOZULDU</h2>
-        <p class="gameover__body">Sıradaki mühür <strong id="gameover-correct">—</strong> olmalıydı.</p>
+        <h2 class="gameover__title" id="gameover-title" data-i18n="over.title">MÜHÜR BOZULDU</h2>
+        <p class="gameover__body" id="gameover-body"></p>
 
         <p class="gameover__score">
-          <span class="gameover__score-key">Puan</span>
+          <span class="gameover__score-key" data-i18n="over.score">Puan</span>
           <strong class="gameover__score-val" id="gameover-score">0</strong>
         </p>
 
         <dl class="gameover__stats">
-          <div><dt>Seviye</dt><dd id="gameover-level">1</dd></div>
-          <div><dt>En uzun kombo</dt><dd id="gameover-combo">0</dd></div>
-          <div><dt>Rekor</dt><dd id="gameover-best">0</dd></div>
+          <div><dt data-i18n="over.level">Seviye</dt><dd id="gameover-level">1</dd></div>
+          <div><dt data-i18n="over.combo">En uzun kombo</dt><dd id="gameover-combo">0</dd></div>
+          <div><dt data-i18n="over.best">Rekor</dt><dd id="gameover-best">0</dd></div>
         </dl>
 
-        <p class="gameover__record" id="gameover-record" hidden>Yeni rekor!</p>
+        <p class="gameover__record" id="gameover-record" data-i18n="over.record" hidden>Yeni rekor!</p>
 
         <div class="gameover__actions">
-          <button class="btn btn--primary" id="retry-btn" type="button">Tekrar Dene</button>
-          <button class="btn btn--ghost" id="menu-btn" type="button">Ana Menü</button>
+          <button class="btn btn--primary" id="retry-btn" type="button" data-i18n="over.retry">Tekrar Dene</button>
+          <button class="btn btn--ghost" id="menu-btn" type="button" data-i18n="over.menu">Ana Menü</button>
         </div>
       </div>
     </div>
@@ -162,6 +182,7 @@
 
 </div>
 
+<script src="js/i18n.js"></script>
 <script src="js/seals.js"></script>
 <script src="js/rules.js"></script>
 <script src="js/audio.js"></script>

@@ -7,11 +7,19 @@
   gap: 0.6rem;
 }
 
+.hud > * {
+  min-width: 0;
+}
+
 .hud__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   padding: 0.4rem 0.7rem;
   font-size: 0.74rem;
   letter-spacing: 0.06em;
   color: var(--paper-dim);
+  white-space: nowrap;
   background: var(--veil-soft);
   border: 1px solid var(--ink-700);
   border-radius: var(--radius-sm);
@@ -21,6 +29,12 @@
 .hud__btn:hover {
   color: var(--chakra-bright);
   border-color: var(--chakra-deep);
+}
+
+.hud__right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .hud__btn--icon {
@@ -89,4 +103,39 @@
 @keyframes chip-in {
   from { opacity: 0; transform: scale(0.6); }
   to { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 480px) {
+  .hud__btn {
+    padding: 0.34rem 0.45rem;
+    font-size: 0.68rem;
+  }
+
+  .hud__stats {
+    gap: 0.55rem;
+  }
+
+  .stat__key {
+    letter-spacing: 0.06em;
+  }
+
+  .combo-chip {
+    padding: 0.2rem 0.4rem;
+  }
+
+  .combo-chip__key {
+    display: none;
+  }
+
+  .combo-chip__val::before {
+    content: '×';
+    margin-right: 0.05em;
+  }
+}
+
+@media (max-width: 480px) {
+  /* The arrow alone carries the meaning; the accessible name stays. */
+  .hud__btn-text {
+    display: none;
+  }
 }
