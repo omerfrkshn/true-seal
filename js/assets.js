@@ -25,6 +25,8 @@ const Preloader = (() => {
       clickSoundPaths.forEach((path, i) => list.push(() => AudioBus.load(`click:${i}`, path)));
       list.push(() => AudioBus.load('jutsu', JUTSU_SOUND_PATH));
       list.push(() => AudioBus.load('countdown', COUNTDOWN_SOUND_PATH));
+      list.push(() => AudioBus.load('gameover', GAMEOVER_SOUND_PATH));
+      startSoundPaths.forEach((path, i) => list.push(() => AudioBus.load(`start:${i}`, path)));
       SEALS.forEach((seal) => list.push(() => AudioBus.load(`name:${seal.id}`, sealPaths.nameAudio(seal))));
     }
 
@@ -59,6 +61,26 @@ const Preloader = (() => {
   }
 
   /**
+   * Music is several megabytes and nothing depends on it, so it loads on its
+   * own and starts whenever it is ready.
+   */
+  async function music() {
+    if (!AudioBus.init()) return false;
+    const loaded = await Promise.all(
+      Object.entries(MUSIC_PATHS).map(([key, path]) =>
+        AudioBus.load(`music:${key}`, path).then(
+          () => true,
+          (err) => {
+            console.warn(err);
+            return false;
+          }
+        )
+      )
+    );
+    return loaded.some(Boolean);
+  }
+
+  /**
    * Backdrops are optional by design: until the artwork exists the panels fall
    * back to their procedural background, so a missing file is not a failure.
    */
@@ -74,5 +96,5 @@ const Preloader = (() => {
     return Object.fromEntries(entries);
   }
 
-  return { run, backgrounds };
+  return { run, music, backgrounds };
 })();

@@ -457,6 +457,7 @@ const Game = (() => {
     lastExpected = expected;
 
     later(() => {
+      AudioBus.playGameover();
       renderGameoverBody();
       el.gameoverLevel.textContent = String(level);
       el.gameoverScore.textContent = score.toLocaleString(I18n.locale());
@@ -564,7 +565,10 @@ const Game = (() => {
     I18n.onChange(refreshLanguage);
 
     el.replayBtn.addEventListener('click', () => replay());
-    el.retryBtn.addEventListener('click', () => start());
+    el.retryBtn.addEventListener('click', () => {
+      AudioBus.playStart();
+      start();
+    });
     el.menuBtn.addEventListener('click', () => {
       stop();
       onExit();

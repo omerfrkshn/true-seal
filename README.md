@@ -58,6 +58,32 @@ Giriş sırasında süre çubuğu boşalır: yeşil → altın → kırmızı. K
 bir şeyin olduğunda baskı da oluyor. Kombo 2 ve üzerinde ekrana `KOMBO xN`
 şok dalgasıyla çakılıyor, kombo büyüdükçe rengi turuncudan kırmızıya kayıyor.
 
+## Ses ve müzik
+
+İki döngülü müzik var: açılış ekranında `hero.mp3`, oyun ekranında `game.mp3`.
+Panel değişince araya 900 ms'lik çapraz geçiş giriyor, kesme yok. Müzik kendi
+alt yoluna bağlı ve efektlerin altında kalsın diye seviyesi düşük tutulmuş
+(`MUSIC_LEVEL`, `js/audio.js`).
+
+Tarayıcılar sayfa bir kullanıcı hareketi görmeden ses çalmaya izin vermiyor, bu
+yüzden açılış müziği ilk tıklama veya tuş basımını bekliyor — nereye olursa.
+Müzik dosyaları da engelleyici ön yüklemeye girmiyor; birkaç megabayt oldukları
+için arkada yüklenip hazır olunca giriyorlar, "Oyuna Başla" onları beklemiyor.
+
+Buton sesleri:
+
+| Ne zaman | Ses |
+|---|---|
+| Oyuna Başla / Tekrar Dene | `ui/start_*.mp3` havuzundan rastgele biri |
+| Yanlış mühre basınca | kod içinde üretilen hata uğultusu (anında) |
+| "Mühür bozuldu" kartı belirince | `ui/muhur_bozuldu.mp3` (950 ms sonra) |
+
+Yanlış basışta iki ayrı ses var çünkü iki ayrı an: uğultu tıklamaya anında
+cevap veriyor, telli çalgı ise kartın belirdiği ana denk geliyor.
+
+Sessize alma düğmesi ana yolu kısıyor — müzik durmuyor, sadece susuyor, açınca
+kaldığı yerden devam ediyor.
+
 ## Dil
 
 Sağ üstteki **TR / EN** düğmesiyle site tamamen Türkçe veya İngilizce
@@ -144,7 +170,8 @@ assets/
   seals/color     renkli arka planlı mühür kareleri
   audio/click     el mührü sesleri + jutsu aktivasyon sesi
   audio/names     Japonca mühür adları
-  audio/ui        geri sayım sesi
+  audio/ui        geri sayım, başlangıç sesleri, mühür bozuldu sesi
+  audio/music     açılış ve oyun ekranı döngüleri
   bg              arka plan görselleri (isteğe bağlı)
   cursor          kunai imleci
   fonts           başlık ve geri sayım fontu + lisansı
@@ -162,6 +189,9 @@ assets/
   bu anlara oturuyor. Sesi değiştirirsen bu değerleri de güncelle.
 - **Hata, kombo ve tik sesleri** için ayrı dosya yok; Web Audio ile kod içinde
   üretiliyorlar (`js/audio.js`).
+- **Müzik döngüsü.** `source.loop` ile dönüyor; mp3'lerin başında/sonunda kodlayıcı
+  dolgusu varsa döngü noktasında ufak bir boşluk duyulabilir. Duyulursa dosyanın
+  başı ile sonu arasına kısa bir crossfade uygulamak yeterli.
 - **Parşömen çerçevesi** görsel değil, CSS. Token'larla yeniden renklendirilebilir
   ve her boyutta keskin kalır.
 - `prefers-reduced-motion` açıksa animasyonlar ve kor parçacıkları devre dışı kalır.

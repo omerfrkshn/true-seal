@@ -8,13 +8,22 @@
  * Three effects have no recording behind them and are synthesised here: the
  * failure sound, the combo chime, and the tick that speeds up as a level's
  * time limit runs out.
+ *
+ * Music runs through its own sub-bus so the loops sit under the effects, and
+ * swapping tracks crossfades rather than cutting.
  */
 const AudioBus = (() => {
+  const MUSIC_LEVEL = 0.32;
+  const MUSIC_FADE_MS = 900;
+
   const buffers = new Map();
+  /** Last pick per random pool, so the same clip never fires twice in a row. */
+  const lastPicks = new Map();
   let ctx = null;
   let master = null;
+  let musicBus = null;
+  let currentMusic = null;
   let muted = false;
-  let lastClickKey = null;
 
   function init() {
     if (ctx) return ctx;
@@ -24,12 +33,19 @@ const AudioBus = (() => {
     master = ctx.createGain();
     master.gain.value = 1;
     master.connect(ctx.destination);
+    musicBus = ctx.createGain();
+    musicBus.gain.value = MUSIC_LEVEL;
+    musicBus.connect(master);
     return ctx;
   }
 
   /** Browsers keep the context suspended until a real gesture happens. */
   function unlock() {
     if (ctx && ctx.state === 'suspended') ctx.resume();
+  }
+
+  function state() {
+    return ctx ? ctx.state : 'unavailable';
   }
 
   async function load(key, url) {
@@ -60,16 +76,35 @@ const AudioBus = (() => {
     return source;
   }
 
-  /** Random hand-seal whoosh, never the same one twice in a row. */
-  function playClick() {
-    const keys = clickSoundPaths.map((_, i) => `click:${i}`).filter((k) => buffers.has(k));
+  /** Picks from a numbered pool, avoiding an immediate repeat. */
+  function playRandom(prefix, count, gain) {
+    const keys = [];
+    for (let i = 0; i < count; i += 1) {
+      const key = `${prefix}:${i}`;
+      if (buffers.has(key)) keys.push(key);
+    }
     if (!keys.length) return;
     let key = keys[Math.floor(Math.random() * keys.length)];
-    if (keys.length > 1 && key === lastClickKey) {
+    if (keys.length > 1 && key === lastPicks.get(prefix)) {
       key = keys[(keys.indexOf(key) + 1) % keys.length];
     }
-    lastClickKey = key;
-    play(key, { gain: 0.85 });
+    lastPicks.set(prefix, key);
+    play(key, { gain });
+  }
+
+  /** Random hand-seal whoosh. */
+  function playClick() {
+    playRandom('click', clickSoundPaths.length, 0.85);
+  }
+
+  /** Random shout when a run is started or retried. */
+  function playStart() {
+    playRandom('start', startSoundPaths.length, 1);
+  }
+
+  /** The string sting that lands with the "seal broke" card. */
+  function playGameover() {
+    play('gameover', { gain: 1 });
   }
 
   function playName(seal) {
@@ -189,6 +224,47 @@ const AudioBus = (() => {
     source.start(at);
   }
 
+  /* ---- music ---- */
+
+  function fadeOutTrack(track, seconds) {
+    const now = ctx.currentTime;
+    const level = track.gain.gain;
+    level.cancelScheduledValues(now);
+    level.setValueAtTime(Math.max(level.value, 0.0001), now);
+    level.exponentialRampToValueAtTime(0.0001, now + seconds);
+    track.source.stop(now + seconds + 0.05);
+  }
+
+  /**
+   * Starts a looping track, crossfading out whatever was playing. Muting only
+   * pulls the master down, so the loop keeps its place and comes straight back.
+   */
+  function playMusic(key, { fadeMs = MUSIC_FADE_MS } = {}) {
+    if (!ctx || !buffers.has(key)) return;
+    if (currentMusic && currentMusic.key === key) return;
+    unlock();
+
+    const seconds = fadeMs / 1000;
+    if (currentMusic) fadeOutTrack(currentMusic, seconds);
+
+    const now = ctx.currentTime;
+    const source = ctx.createBufferSource();
+    source.buffer = buffers.get(key);
+    source.loop = true;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(1, now + seconds);
+    source.connect(gain).connect(musicBus);
+    source.start(now);
+    currentMusic = { key, source, gain };
+  }
+
+  function stopMusic({ fadeMs = MUSIC_FADE_MS } = {}) {
+    if (!currentMusic) return;
+    fadeOutTrack(currentMusic, fadeMs / 1000);
+    currentMusic = null;
+  }
+
   function setMuted(next) {
     muted = next;
     if (master) master.gain.value = next ? 0 : 1;
@@ -201,15 +277,20 @@ const AudioBus = (() => {
   return {
     init,
     unlock,
+    state,
     load,
     play,
     playClick,
+    playStart,
     playName,
     playJutsu,
     playCountdown,
+    playGameover,
     playError,
     playCombo,
     playTick,
+    playMusic,
+    stopMusic,
     setMuted,
     isMuted
   };

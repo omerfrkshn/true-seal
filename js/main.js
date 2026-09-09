@@ -33,6 +33,8 @@
   let slideTimer = null;
   let loadProgress = 0;
   let loadFailures = 0;
+  let musicReady = false;
+  let musicArmed = false;
 
   /* ---- title ---- */
 
@@ -200,6 +202,42 @@
     return { enable, disable };
   })();
 
+  /* ---- music ---- */
+
+  function currentTrack() {
+    return onGamePanel ? 'music:game' : 'music:hero';
+  }
+
+  /** Needs both halves: the files decoded, and a gesture to unblock playback. */
+  function tryMusic() {
+    if (!musicReady || !musicArmed) return;
+    AudioBus.playMusic(currentTrack());
+  }
+
+  /**
+   * Autoplay stays blocked until the page has seen a real gesture, so the
+   * landing theme waits for the first one — a click anywhere will do.
+   */
+  function armMusic() {
+    // `click` is in the list too: it is the only one a synthetic or
+    // assistive-tech activation is guaranteed to produce.
+    const events = ['pointerdown', 'keydown', 'click'];
+
+    const kick = () => {
+      events.forEach((name) => document.removeEventListener(name, kick, true));
+      musicArmed = true;
+      AudioBus.unlock();
+      tryMusic();
+    };
+
+    if (AudioBus.state() === 'running') {
+      kick();
+      return;
+    }
+
+    events.forEach((name) => document.addEventListener(name, kick, true));
+  }
+
   /* ---- panel slide ---- */
 
   function setActivePanel(toGame) {
@@ -208,6 +246,7 @@
     // `inert` keeps the off-screen panel out of tab order and the a11y tree.
     heroPanel.inert = toGame;
     gamePanel.inert = !toGame;
+    tryMusic();
 
     clearTimeout(slideTimer);
     const settle = reduceMotion ? 0 : SLIDE_MS;
@@ -293,6 +332,12 @@
     heroPanel.classList.add('is-playing');
 
     // Backdrops are optional, so they are applied whenever they turn up.
+    armMusic();
+    Preloader.music().then((ok) => {
+      musicReady = ok;
+      tryMusic();
+    });
+
     Preloader.backgrounds().then((art) => {
       if (art.hero) {
         heroArt.style.backgroundImage = `url("${art.hero}")`;
@@ -319,6 +364,7 @@
 
   startBtn.addEventListener('click', () => {
     AudioBus.unlock();
+    AudioBus.playStart();
     setActivePanel(true);
   });
 
