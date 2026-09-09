@@ -1,0 +1,92 @@
+/* Top bar of the game panel: menu, level/seal/score readout, combo chip, mute. */
+
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.hud__btn {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  color: var(--paper-dim);
+  background: var(--veil-soft);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--radius-sm);
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.hud__btn:hover {
+  color: var(--chakra-bright);
+  border-color: var(--chakra-deep);
+}
+
+.hud__btn--icon {
+  min-width: 2.3rem;
+}
+
+.hud__icon {
+  font-size: 1rem;
+  color: var(--chakra);
+}
+
+.hud__btn[aria-pressed='true'] .hud__icon {
+  color: var(--paper-faint);
+}
+
+.hud__stats {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 2.6vw, 1.6rem);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+}
+
+.stat__key {
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  color: var(--paper-faint);
+  text-transform: uppercase;
+}
+
+.stat__val {
+  font-size: clamp(1rem, 4vw, 1.4rem);
+  font-weight: 700;
+  color: var(--paper);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat--score .stat__val {
+  color: var(--gold);
+}
+
+.combo-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--ink-950);
+  background: linear-gradient(140deg, var(--chakra-bright), var(--blood));
+  border-radius: 999px;
+  animation: chip-in 320ms var(--ease-pop);
+}
+
+.combo-chip__val {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+@keyframes chip-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}

@@ -2,8 +2,8 @@
  * The twelve hand seals, in traditional zodiac order.
  *
  * `id` doubles as the asset slug:
- *   assets/seals/png/<id>-320.png   transparent cut-out, shown as the click flash
- *   assets/seals/color/<id>.jpg     coloured tile, used on buttons and in the sequence screen
+ *   assets/seals/png/<id>.png    transparent cut-out, shown as the click flash
+ *   assets/seals/color/<id>.jpg  coloured tile, used on buttons and in the scroll
  *   assets/audio/names/<id>_<romaji lowercased>.wav
  */
 const SEALS = [
@@ -21,15 +21,9 @@ const SEALS = [
   { id: 'domuz', label: 'Yaban Domuzu', short: 'Domuz', romaji: 'I', kana: 'イ' }
 ];
 
-/** Two rendered widths ship for every cut-out; the browser picks one via srcset. */
-const SEAL_PNG_WIDTHS = [320, 640];
-
 const sealPaths = {
-  pngSrcset(id) {
-    return SEAL_PNG_WIDTHS.map((w) => `assets/seals/png/${id}-${w}.png ${w}w`).join(', ');
-  },
-  pngFallback(id) {
-    return `assets/seals/png/${id}-${SEAL_PNG_WIDTHS[0]}.png`;
+  png(id) {
+    return `assets/seals/png/${id}.png`;
   },
   color(id) {
     return `assets/seals/color/${id}.jpg`;
@@ -39,9 +33,6 @@ const sealPaths = {
   }
 };
 
-/** Sizes attribute for the click flash, matching the CSS width of `.seal-flash__img`. */
-const SEAL_FLASH_SIZES = '(max-width: 640px) 62vw, 340px';
-
 const CLICK_SOUND_COUNT = 10;
 
 const clickSoundPaths = Array.from(
@@ -50,3 +41,19 @@ const clickSoundPaths = Array.from(
 );
 
 const JUTSU_SOUND_PATH = 'assets/audio/click/jutsu_aktivasyon_sesi.wav';
+const COUNTDOWN_SOUND_PATH = 'assets/audio/ui/sayac_sesi.wav';
+
+/**
+ * Beat positions measured off the countdown recording's envelope, so the
+ * digits land on the sound instead of on an arbitrary even split.
+ * Three digits, then the "Ezberle!" cue on the fourth beat.
+ */
+const COUNTDOWN_BEATS_MS = [210, 1100, 2210];
+const COUNTDOWN_CUE_MS = 3200;
+const COUNTDOWN_TOTAL_MS = 4020;
+
+/** Optional backdrops. Missing files simply leave the procedural background. */
+const BACKGROUND_PATHS = {
+  hero: 'assets/bg/hero.png',
+  game: 'assets/bg/game.png'
+};

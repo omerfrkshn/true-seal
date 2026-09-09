@@ -1,0 +1,90 @@
+/*
+ * The game name: an outline that draws in letter by letter, a filled copy
+ * that floods across it, and a light sweep. Timed by the landing intro.
+ */
+
+.hero__title {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: clamp(2.9rem, 12vw, 8.5rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.title__layer {
+  display: flex;
+}
+
+.title__layer--stroke {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--chakra);
+}
+
+.title__layer--fill {
+  position: absolute;
+  inset: 0;
+  justify-content: center;
+  color: transparent;
+  background: linear-gradient(178deg, var(--paper) 6%, var(--chakra-bright) 46%, var(--chakra-deep) 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  clip-path: inset(0 100% 0 0);
+}
+
+.title__char {
+  display: inline-block;
+}
+
+.title__char--space {
+  width: 0.34em;
+}
+
+.title__layer--stroke .title__char {
+  opacity: 0;
+  transform: translateY(0.42em) scale(1.45);
+  filter: blur(12px);
+}
+
+.is-playing .title__layer--stroke .title__char {
+  animation: char-draw 620ms var(--ease-slam) forwards;
+  animation-delay: calc(300ms + var(--i) * 55ms);
+}
+
+.is-playing .title__layer--fill {
+  animation: fill-flood 860ms var(--ease-slam) 1150ms forwards;
+}
+
+.title__sweep {
+  position: absolute;
+  inset: -14% -30%;
+  background: linear-gradient(102deg, transparent 42%, var(--sheen) 50%, transparent 58%);
+  opacity: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.is-playing .title__sweep {
+  animation: title-sweep 950ms ease-in-out 1400ms;
+}
+
+@keyframes char-draw {
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes fill-flood {
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes title-sweep {
+  0% { opacity: 0; transform: translateX(-55%); }
+  25% { opacity: 0.9; }
+  75% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(55%); }
+}

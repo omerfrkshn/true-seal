@@ -5,8 +5,9 @@
  * Japanese name), so decoded buffers are used instead of <audio> elements —
  * overlapping playback and retriggering are free that way.
  *
- * The failure sound is synthesised rather than loaded: a detuned pair of
- * oscillators sliding downwards, plus a short noise crack.
+ * Three effects have no recording behind them and are synthesised here: the
+ * failure sound, the combo chime, and the tick that speeds up as a level's
+ * time limit runs out.
  */
 const AudioBus = (() => {
   const buffers = new Map();
@@ -79,6 +80,11 @@ const AudioBus = (() => {
     play('jutsu', { gain: 1 });
   }
 
+  /** Returns the source so the caller can cut it short if the round aborts. */
+  function playCountdown() {
+    return play('countdown', { gain: 0.9 });
+  }
+
   function playError() {
     if (muted || !ctx) return;
     unlock();
@@ -110,24 +116,77 @@ const AudioBus = (() => {
       osc.stop(now + 0.58);
     });
 
-    // Short crack on the attack so the failure reads as a snap, not just a drone.
-    const noiseLength = Math.floor(ctx.sampleRate * 0.12);
-    const noiseBuffer = ctx.createBuffer(1, noiseLength, ctx.sampleRate);
-    const channel = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < noiseLength; i += 1) {
-      channel[i] = (Math.random() * 2 - 1) * (1 - i / noiseLength);
+    noiseBurst(now, 0.12, 900, 0.3, 0.14);
+  }
+
+  /** Bright metallic ring, brighter as the streak gets longer. */
+  function playCombo(streak) {
+    if (muted || !ctx) return;
+    unlock();
+    const now = ctx.currentTime;
+    const step = Math.min(streak, 8);
+    const root = 520 * Math.pow(2, step / 12);
+
+    [1, 1.5, 2.02].forEach((ratio, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = i === 0 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(root * ratio, now);
+      osc.frequency.exponentialRampToValueAtTime(root * ratio * 1.35, now + 0.5);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.2 / (i + 1), now + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+      osc.connect(g).connect(master);
+      osc.start(now);
+      osc.stop(now + 0.65);
+    });
+
+    noiseBurst(now, 0.18, 4200, 0.16, 0.2);
+  }
+
+  /**
+   * Clock tick during input. `urgency` (0..1) raises the pitch and level so the
+   * last stretch before the time limit actually feels like pressure.
+   */
+  function playTick(urgency = 0) {
+    if (muted || !ctx) return;
+    unlock();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(760 + urgency * 620, now);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.035 + urgency * 0.075, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 1800;
+    band.Q.value = 2;
+    osc.connect(band).connect(g).connect(master);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  }
+
+  /** Shared shaped-noise helper for the synthesised effects. */
+  function noiseBurst(at, seconds, centre, level, decay) {
+    const length = Math.floor(ctx.sampleRate * seconds);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const channel = buffer.getChannelData(0);
+    for (let i = 0; i < length; i += 1) {
+      channel[i] = (Math.random() * 2 - 1) * (1 - i / length);
     }
-    const noise = ctx.createBufferSource();
-    noise.buffer = noiseBuffer;
-    const noiseBand = ctx.createBiquadFilter();
-    noiseBand.type = 'bandpass';
-    noiseBand.frequency.value = 900;
-    noiseBand.Q.value = 1.2;
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.3, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-    noise.connect(noiseBand).connect(noiseGain).connect(master);
-    noise.start(now);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = centre;
+    band.Q.value = 1.2;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(level, at);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+    source.connect(band).connect(g).connect(master);
+    source.start(at);
   }
 
   function setMuted(next) {
@@ -139,5 +198,19 @@ const AudioBus = (() => {
     return muted;
   }
 
-  return { init, unlock, load, play, playClick, playName, playJutsu, playError, setMuted, isMuted };
+  return {
+    init,
+    unlock,
+    load,
+    play,
+    playClick,
+    playName,
+    playJutsu,
+    playCountdown,
+    playError,
+    playCombo,
+    playTick,
+    setMuted,
+    isMuted
+  };
 })();

@@ -2,33 +2,29 @@
  * Round loop: countdown -> "Ezberle!" -> playback -> player input -> pass or fail.
  *
  * Every async step carries the run token it started with. Anything that
- * interrupts a round (retry, back to menu, a wrong tap) bumps the token, so
- * pending steps from the abandoned round return instead of touching the DOM.
+ * interrupts a round (retry, replay, back to menu, a wrong tap) bumps the
+ * token, so pending steps from the abandoned round return instead of touching
+ * the DOM. Purely cosmetic timeouts deliberately stay outside that set — they
+ * must still fire after an abort, or a button keeps its highlight forever.
  */
 const Game = (() => {
-  const BASE_LENGTH = 3;
-  const MAX_LENGTH = 12;
-  const BASE_SHOW_MS = 900;
-  const MIN_SHOW_MS = 300;
-  const SHOW_STEP_MS = 60;
-  const BASE_GAP_MS = 250;
-  const MIN_GAP_MS = 120;
-  const GAP_STEP_MS = 15;
-
-  const COUNTDOWN_STEP_MS = 780;
-  const CUE_MS = 800;
   const LEAD_IN_MS = 260;
-  const JUTSU_CUE_MS = 1100;
+  const JUTSU_CUE_MS = 1200;
   const FAIL_REVEAL_MS = 950;
+  const STRESS_FROM = 0.6; // share of the time limit before the pressure shows
+  const TICK_SLOW_MS = 700;
+  const TICK_FAST_MS = 180;
+  const TICK_FROM = 0.35;
 
-  const BEST_KEY = 'muhur-hafizasi:rekor';
+  const BEST_SCORE_KEY = 'true-seal:rekor-puan';
+  const BEST_LEVEL_KEY = 'true-seal:rekor-seviye';
 
   const HINTS = {
     idle: 'Diziyi bekle.',
     countdown: 'Hazır ol…',
     playback: 'İzle ve ezberle.',
     input: 'Şimdi aynı sırayla tekrarla.',
-    success: 'Jutsu aktif. Sıradaki seviye geliyor…',
+    success: 'Jutsu aktif.',
     gameover: 'Mühür bozuldu.'
   };
 
@@ -38,11 +34,24 @@ const Game = (() => {
 
   let state = 'idle';
   let level = 1;
+  let score = 0;
+  let combo = 0;
+  let longestCombo = 0;
   let sequence = [];
   let inputIndex = 0;
-  let best = 0;
+  let replaysLeft = Rules.REPLAY_ALLOWANCE;
+  let replaysUsed = 0;
+  let bestScore = 0;
+  let bestLevel = 0;
   let runToken = 0;
+  let countdownSource = null;
   let onExit = () => {};
+
+  // Input timer
+  let inputStart = 0;
+  let timeLimit = 0;
+  let clockRaf = null;
+  let nextTickAt = 0;
 
   /* ---- timing helpers ---- */
 
@@ -59,52 +68,41 @@ const Game = (() => {
     return new Promise((resolve) => later(resolve, ms));
   }
 
+  function sleepUntil(deadline) {
+    return sleep(Math.max(0, deadline - performance.now()));
+  }
+
   function abortRun() {
     runToken += 1;
     timers.forEach(clearTimeout);
     timers.clear();
+    stopCountdownSound();
+    stopClock();
   }
 
-  /* ---- difficulty ---- */
-
-  function lengthFor(lv) {
-    return Math.min(MAX_LENGTH, BASE_LENGTH + lv - 1);
-  }
-
-  function timingFor(lv) {
-    return {
-      showMs: Math.max(MIN_SHOW_MS, BASE_SHOW_MS - (lv - 1) * SHOW_STEP_MS),
-      gapMs: Math.max(MIN_GAP_MS, BASE_GAP_MS - (lv - 1) * GAP_STEP_MS)
-    };
-  }
-
-  /** Back-to-back duplicates read as one long display, so they are skipped. */
-  function buildSequence(lv) {
-    const out = [];
-    for (let i = 0; i < lengthFor(lv); i += 1) {
-      let pick;
-      do {
-        pick = SEALS[Math.floor(Math.random() * SEALS.length)];
-      } while (out.length && pick.id === out[out.length - 1].id);
-      out.push(pick);
+  function stopCountdownSound() {
+    if (!countdownSource) return;
+    try {
+      countdownSource.stop();
+    } catch (err) {
+      /* already finished */
     }
-    return out;
+    countdownSource = null;
   }
 
   /* ---- record ---- */
 
-  function readBest() {
+  function readNumber(key) {
     try {
-      return Number(localStorage.getItem(BEST_KEY)) || 0;
+      return Number(localStorage.getItem(key)) || 0;
     } catch (err) {
       return 0;
     }
   }
 
-  function writeBest(value) {
-    best = value;
+  function writeNumber(key, value) {
     try {
-      localStorage.setItem(BEST_KEY, String(value));
+      localStorage.setItem(key, String(value));
     } catch (err) {
       /* private mode — the record just does not survive the session */
     }
@@ -119,12 +117,20 @@ const Game = (() => {
     buttons.forEach((btn) => {
       btn.disabled = locked;
     });
+    el.replayBtn.disabled = locked || replaysLeft <= 0;
   }
 
   function updateHud() {
     el.statLevel.textContent = String(level);
-    el.statLength.textContent = String(lengthFor(level));
-    el.statBest.textContent = String(best);
+    el.statLength.textContent = String(Rules.lengthFor(level));
+    el.statScore.textContent = score.toLocaleString('tr-TR');
+    el.comboChip.hidden = combo < 1;
+    el.comboValue.textContent = String(combo);
+  }
+
+  function updateReplayUi() {
+    el.replayCount.textContent = String(replaysLeft);
+    el.replayBtn.disabled = state !== 'input' || replaysLeft <= 0;
   }
 
   function renderDots() {
@@ -143,8 +149,13 @@ const Game = (() => {
     dot.className = className ? `dot ${className}` : 'dot';
   }
 
+  function resetDots() {
+    [...el.dots.children].forEach((dot) => {
+      dot.className = 'dot';
+    });
+  }
+
   function showScreenSeal(seal, animate) {
-    el.screenIdle.hidden = true;
     el.screenImg.src = sealPaths.color(seal.id);
     el.screenImg.alt = `${seal.label} mührü`;
     el.screenImg.hidden = false;
@@ -162,8 +173,13 @@ const Game = (() => {
 
   function resetScreen() {
     clearScreen();
-    el.screenIdle.hidden = false;
     el.screen.classList.remove('is-live', 'is-failed', 'is-success');
+  }
+
+  /** Cosmetic classes are cleared by hand because their timers can be aborted. */
+  function clearButtonStates() {
+    buttons.forEach((btn) => btn.classList.remove('is-hit', 'is-miss'));
+    el.grid.classList.remove('is-error');
   }
 
   function showOverlay(text, variant) {
@@ -181,9 +197,7 @@ const Game = (() => {
 
   /** The cut-out seal that blooms in the middle of the screen on every tap. */
   function flashSeal(seal) {
-    el.flashImg.sizes = SEAL_FLASH_SIZES;
-    el.flashImg.srcset = sealPaths.pngSrcset(seal.id);
-    el.flashImg.src = sealPaths.pngFallback(seal.id);
+    el.flashImg.src = sealPaths.png(seal.id);
     el.flashKana.textContent = seal.kana;
     el.flashRomaji.textContent = seal.romaji;
     el.flash.classList.remove('is-firing');
@@ -195,66 +209,197 @@ const Game = (() => {
     const btn = buttons.get(id);
     if (!btn) return;
     btn.classList.add(className);
-    later(() => btn.classList.remove(className), ms);
+    // Deliberately not registered with `timers`: an abort must not strand it.
+    setTimeout(() => btn.classList.remove(className), ms);
+  }
+
+  function popScore(points) {
+    el.scorePop.textContent = `+${points.toLocaleString('tr-TR')}`;
+    el.scorePop.classList.remove('is-firing');
+    void el.scorePop.offsetWidth;
+    el.scorePop.classList.add('is-firing');
+  }
+
+  function burstCombo(streak) {
+    el.comboText.textContent = `KOMBO x${streak}`;
+    el.comboBurst.dataset.heat = String(Math.min(streak, 6));
+    el.comboBurst.classList.remove('is-firing');
+    void el.comboBurst.offsetWidth;
+    el.comboBurst.classList.add('is-firing');
+  }
+
+  /* ---- input clock ---- */
+
+  function startClock() {
+    inputStart = performance.now();
+    timeLimit = Rules.timeLimitMs(level);
+    nextTickAt = timeLimit * TICK_FROM;
+    el.timer.hidden = false;
+    el.timer.classList.remove('is-hot', 'is-lost');
+    el.timer.classList.toggle('is-guarded', combo >= 1);
+    tickClock();
+  }
+
+  function tickClock() {
+    const elapsed = performance.now() - inputStart;
+    const urgency = Math.min(1, elapsed / timeLimit);
+    el.timerFill.style.transform = `scaleX(${1 - urgency})`;
+
+    if (urgency >= 1) {
+      el.timer.classList.add('is-lost');
+      el.timer.classList.remove('is-hot');
+      el.panel.classList.remove('is-stress');
+      if (combo > 0) {
+        combo = 0; // the streak is gone the moment the limit passes
+        updateHud();
+        el.timer.classList.remove('is-guarded');
+      }
+    } else {
+      const hot = urgency >= STRESS_FROM;
+      el.timer.classList.toggle('is-hot', hot);
+      // Only squeeze the player when there is a streak on the line.
+      el.panel.classList.toggle('is-stress', hot && combo >= 1);
+
+      if (elapsed >= nextTickAt) {
+        AudioBus.playTick(urgency);
+        const interval = TICK_SLOW_MS + (TICK_FAST_MS - TICK_SLOW_MS) * urgency;
+        nextTickAt = elapsed + interval;
+      }
+    }
+
+    clockRaf = requestAnimationFrame(tickClock);
+  }
+
+  function stopClock() {
+    if (clockRaf !== null) cancelAnimationFrame(clockRaf);
+    clockRaf = null;
+    el.timer.hidden = true;
+    el.timer.classList.remove('is-hot', 'is-lost', 'is-guarded');
+    el.panel.classList.remove('is-stress');
   }
 
   /* ---- round ---- */
 
-  async function runLevel() {
-    abortRun();
-    const token = runToken;
-
-    sequence = buildSequence(level);
-    inputIndex = 0;
-    resetScreen();
-    renderDots();
-    updateHud();
-    setState('countdown');
-
-    for (const tick of ['3', '2', '1']) {
-      showOverlay(tick, 'is-count');
-      await sleep(COUNTDOWN_STEP_MS);
-      if (token !== runToken) return;
-    }
-
-    showOverlay('EZBERLE!', 'is-cue');
-    await sleep(CUE_MS);
-    if (token !== runToken) return;
-    hideOverlay();
-
+  async function playSequence(token) {
     setState('playback');
     el.screen.classList.add('is-live');
     await sleep(LEAD_IN_MS);
-    if (token !== runToken) return;
+    if (token !== runToken) return false;
 
-    const { showMs, gapMs } = timingFor(level);
+    const { showMs, gapMs } = Rules.timingFor(level);
     for (let i = 0; i < sequence.length; i += 1) {
       showScreenSeal(sequence[i], true);
       markDot(i, 'is-active');
       AudioBus.playClick();
       await sleep(showMs);
-      if (token !== runToken) return;
+      if (token !== runToken) return false;
 
       clearScreen();
       markDot(i, null);
       await sleep(gapMs);
-      if (token !== runToken) return;
+      if (token !== runToken) return false;
     }
 
     el.screen.classList.remove('is-live');
-    el.screenIdle.hidden = false;
+    return true;
+  }
+
+  function beginInput() {
+    inputIndex = 0;
+    resetDots();
     setState('input');
+    updateReplayUi();
+    startClock();
+  }
+
+  /** Back-to-back duplicates read as one long display, so they are skipped. */
+  function buildSequence() {
+    const out = [];
+    for (let i = 0; i < Rules.lengthFor(level); i += 1) {
+      let pick;
+      do {
+        pick = SEALS[Math.floor(Math.random() * SEALS.length)];
+      } while (out.length && pick.id === out[out.length - 1].id);
+      out.push(pick);
+    }
+    return out;
+  }
+
+  async function runLevel() {
+    abortRun();
+    const token = runToken;
+
+    sequence = buildSequence();
+    replaysLeft = Rules.REPLAY_ALLOWANCE;
+    replaysUsed = 0;
+    resetScreen();
+    clearButtonStates();
+    renderDots();
+    updateHud();
+    updateReplayUi();
+    setState('countdown');
+
+    const start = performance.now();
+    countdownSource = AudioBus.playCountdown();
+
+    for (let i = 0; i < COUNTDOWN_BEATS_MS.length; i += 1) {
+      await sleepUntil(start + COUNTDOWN_BEATS_MS[i]);
+      if (token !== runToken) return;
+      showOverlay(String(COUNTDOWN_BEATS_MS.length - i), 'is-count');
+    }
+
+    await sleepUntil(start + COUNTDOWN_CUE_MS);
+    if (token !== runToken) return;
+    showOverlay('EZBERLE!', 'is-cue');
+
+    await sleepUntil(start + COUNTDOWN_TOTAL_MS);
+    if (token !== runToken) return;
+    hideOverlay();
+    countdownSource = null;
+
+    if (await playSequence(token)) beginInput();
+  }
+
+  async function replay() {
+    if (state !== 'input' || replaysLeft <= 0) return;
+    replaysLeft -= 1;
+    replaysUsed += 1;
+
+    abortRun();
+    const token = runToken;
+    resetDots();
+    updateReplayUi();
+
+    if (await playSequence(token)) beginInput();
   }
 
   function succeed() {
+    const elapsed = performance.now() - inputStart;
+    const inTime = elapsed <= timeLimit;
+
     abortRun();
     setState('success');
     AudioBus.playJutsu();
+
+    combo = inTime ? combo + 1 : 0;
+    longestCombo = Math.max(longestCombo, combo);
+
+    const result = Rules.levelScore({ level, elapsedMs: elapsed, replaysUsed, combo });
+    score += result.total;
+
     el.screen.classList.add('is-success');
-    showOverlay('JUTSU AKTİF', 'is-cue is-jutsu');
+    popScore(result.total);
+
+    // On a streak the burst is the celebration; the veiled cue would only
+    // fight it for the same moment and the same middle of the screen.
+    if (combo >= 2) {
+      burstCombo(combo);
+      AudioBus.playCombo(combo);
+    } else {
+      showOverlay('JUTSU AKTİF', 'is-cue is-jutsu');
+    }
 
     level += 1;
-    if (level > best) writeBest(level);
     updateHud();
 
     later(() => {
@@ -268,14 +413,23 @@ const Game = (() => {
     setState('gameover');
     AudioBus.playError();
 
-    const isRecord = level > best;
-    if (isRecord) writeBest(level);
+    const isRecord = score > bestScore;
+    if (isRecord) {
+      bestScore = score;
+      writeNumber(BEST_SCORE_KEY, bestScore);
+    }
+    if (level > bestLevel) {
+      bestLevel = level;
+      writeNumber(BEST_LEVEL_KEY, bestLevel);
+    }
+
+    combo = 0;
     updateHud();
 
     markDot(inputIndex, 'is-wrong');
     pulseButton(pressed.id, 'is-miss', 900);
     el.grid.classList.add('is-error');
-    later(() => el.grid.classList.remove('is-error'), 420);
+    setTimeout(() => el.grid.classList.remove('is-error'), 420);
 
     el.screen.classList.remove('is-live');
     el.screen.classList.add('is-failed');
@@ -284,6 +438,9 @@ const Game = (() => {
     later(() => {
       el.gameoverCorrect.textContent = `${expected.label} (${expected.romaji})`;
       el.gameoverLevel.textContent = String(level);
+      el.gameoverScore.textContent = score.toLocaleString('tr-TR');
+      el.gameoverCombo.textContent = String(longestCombo);
+      el.gameoverBest.textContent = bestScore.toLocaleString('tr-TR');
       el.gameoverRecord.hidden = !isRecord;
       el.gameover.hidden = false;
       el.retryBtn.focus();
@@ -340,14 +497,23 @@ const Game = (() => {
 
   function mount(handlers) {
     Object.assign(el, {
+      panel: document.getElementById('game-panel'),
       screen: document.getElementById('seal-screen'),
       screenImg: document.getElementById('seal-screen-img'),
-      screenIdle: document.getElementById('seal-screen-idle'),
       dots: document.getElementById('progress-dots'),
+      timer: document.getElementById('timer'),
+      timerFill: document.getElementById('timer-fill'),
       hint: document.getElementById('stage-hint'),
       grid: document.getElementById('seal-grid'),
+      replayBtn: document.getElementById('replay-btn'),
+      replayCount: document.getElementById('replay-count'),
       overlay: document.getElementById('game-overlay'),
       overlayText: document.getElementById('overlay-text'),
+      comboBurst: document.getElementById('combo-burst'),
+      comboText: document.getElementById('combo-text'),
+      comboChip: document.getElementById('combo-chip'),
+      comboValue: document.getElementById('combo-value'),
+      scorePop: document.getElementById('score-pop'),
       flash: document.getElementById('seal-flash'),
       flashImg: document.getElementById('seal-flash-img'),
       flashKana: document.getElementById('flash-kana'),
@@ -355,20 +521,26 @@ const Game = (() => {
       gameover: document.getElementById('gameover'),
       gameoverCorrect: document.getElementById('gameover-correct'),
       gameoverLevel: document.getElementById('gameover-level'),
+      gameoverScore: document.getElementById('gameover-score'),
+      gameoverCombo: document.getElementById('gameover-combo'),
+      gameoverBest: document.getElementById('gameover-best'),
       gameoverRecord: document.getElementById('gameover-record'),
       retryBtn: document.getElementById('retry-btn'),
       menuBtn: document.getElementById('menu-btn'),
       statLevel: document.getElementById('stat-level'),
       statLength: document.getElementById('stat-length'),
-      statBest: document.getElementById('stat-best')
+      statScore: document.getElementById('stat-score')
     });
 
     onExit = handlers.onExit;
-    best = readBest();
+    bestScore = readNumber(BEST_SCORE_KEY);
+    bestLevel = readNumber(BEST_LEVEL_KEY);
     renderButtons();
     updateHud();
+    updateReplayUi();
     setState('idle');
 
+    el.replayBtn.addEventListener('click', () => replay());
     el.retryBtn.addEventListener('click', () => start());
     el.menuBtn.addEventListener('click', () => {
       stop();
@@ -379,6 +551,9 @@ const Game = (() => {
   function start() {
     el.gameover.hidden = true;
     level = 1;
+    score = 0;
+    combo = 0;
+    longestCombo = 0;
     runLevel();
   }
 
@@ -387,10 +562,12 @@ const Game = (() => {
     el.gameover.hidden = true;
     hideOverlay();
     resetScreen();
+    clearButtonStates();
     el.dots.replaceChildren();
-    el.grid.classList.remove('is-error');
+    combo = 0;
+    updateHud();
     setState('idle');
   }
 
-  return { mount, start, stop, getBest: () => best };
+  return { mount, start, stop, getBestScore: () => bestScore, getBestLevel: () => bestLevel };
 })();

@@ -1,189 +1,294 @@
-/* Landing panel: ink field, kanji reveal, title, start control. */
+/*
+ * Landing panel and its intro.
+ *
+ * The whole opening is one CSS timeline started by `.is-playing`:
+ *   0.30s  outline letters draw in, one after another
+ *   1.15s  the filled copy floods across them
+ *   1.40s  a light sweep crosses the name
+ *   1.90s  the rule opens from the centre
+ *   2.15s  the description rises
+ *   2.50s  the chakra ring slams down onto the button
+ *   3.00s  impact: flash, shake, shockwave
+ *   3.60s  the ring settles into its idle pulse
+ */
 
 .panel--hero {
   display: grid;
   place-items: center;
   padding: 2rem 1.25rem;
-  background:
-    radial-gradient(circle at 50% 42%, var(--ink-800) 0%, var(--ink-950) 62%),
-    var(--ink-950);
+  background: var(--ink-950);
+  isolation: isolate;
 }
 
-.hero__ink {
+/* ---- scene ---- */
+
+.hero__scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.hero__art {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-image:
+    radial-gradient(circle at 50% 118%, var(--chakra-deep) 0%, transparent 46%),
+    radial-gradient(circle at 18% 12%, var(--ink-700) 0%, transparent 52%),
+    radial-gradient(circle at 82% 20%, var(--ink-800) 0%, transparent 48%),
+    linear-gradient(180deg, var(--ink-950), var(--ink-900) 55%, var(--ink-950));
+  transform: scale(1.08);
+  will-change: transform;
+}
+
+.hero__embers {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.55;
 }
 
-.hero__kanji {
+/* Keeps the centre readable no matter what artwork is dropped in. */
+.hero__haze {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: clamp(18rem, 58vmin, 40rem);
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 3px var(--chakra-deep);
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(1.35);
-  filter: blur(18px);
-  animation: kanji-settle 2200ms var(--ease-slide) 200ms forwards, kanji-breathe 7s ease-in-out 2400ms infinite;
+  inset: -5%;
+  background:
+    radial-gradient(ellipse 62% 52% at 50% 48%, var(--veil) 0%, transparent 72%),
+    linear-gradient(180deg, var(--veil-soft) 0%, transparent 28%, transparent 62%, var(--veil) 100%);
+  will-change: transform;
 }
 
-@keyframes kanji-settle {
+.panel--hero.has-art .hero__haze {
+  background:
+    radial-gradient(ellipse 56% 46% at 50% 46%, var(--veil-light) 0%, transparent 70%),
+    linear-gradient(180deg, var(--veil-soft) 0%, transparent 24%, transparent 60%, var(--veil) 100%);
+}
+
+.hero__torch {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 34rem;
+  height: 34rem;
+  margin: -17rem 0 0 -17rem;
+  background: radial-gradient(circle, var(--chakra-deep) 0%, transparent 62%);
+  opacity: 0.32;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Impact flash and shake, fired with the button slam. */
+.panel--hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: var(--sheen);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.panel--hero.is-playing::after {
+  animation: impact-flash 460ms ease-out 2960ms forwards;
+}
+
+.panel--hero.is-playing .hero__scene {
+  animation: impact-shake 360ms ease-out 2980ms;
+}
+
+@keyframes impact-flash {
+  0% { opacity: 0; }
+  12% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+
+@keyframes impact-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  18% { transform: translate3d(0, 9px, 0) scale(1.012); }
+  38% { transform: translate3d(-6px, -5px, 0); }
+  58% { transform: translate3d(5px, 3px, 0); }
+  80% { transform: translate3d(-2px, -1px, 0); }
+}
+
+/* ---- content ---- */
+
+.hero__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+  width: min(100%, 44rem);
+  text-align: center;
+  will-change: transform;
+}
+
+/* ---- rule + description ---- */
+
+.hero__rule {
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--chakra), transparent);
+}
+
+.is-playing .hero__rule {
+  animation: rule-open 640ms var(--ease-slam) 1900ms forwards;
+}
+
+@keyframes rule-open {
+  to { width: min(22rem, 76%); }
+}
+
+.hero__desc {
+  max-width: 30rem;
+  font-size: clamp(0.88rem, 2.5vw, 1.02rem);
+  line-height: 1.7;
+  color: var(--paper-dim);
+  opacity: 0;
+  transform: translateY(0.7rem);
+}
+
+.is-playing .hero__desc {
+  animation: rise-in 720ms var(--ease-slam) 2150ms forwards;
+}
+
+@keyframes rise-in {
   to {
-    opacity: 0.55;
-    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- start button ---- */
+
+.start-btn {
+  position: relative;
+  margin-top: 0.5rem;
+  padding: 1.05rem 3.1rem;
+  font-size: clamp(0.95rem, 3vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink-950);
+  border-radius: 999px;
+  transition: transform 180ms var(--ease-pop);
+}
+
+.start-btn__plate {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, var(--chakra-bright), var(--chakra));
+  border-radius: inherit;
+  box-shadow: var(--glow-chakra), var(--shadow-lift);
+  opacity: 0;
+  transition: filter 320ms ease;
+}
+
+.start-btn[disabled] .start-btn__plate {
+  filter: grayscale(0.85) brightness(0.5);
+}
+
+.start-btn__ring {
+  position: absolute;
+  inset: -0.85rem;
+  border: 2px solid var(--chakra);
+  border-radius: 999px;
+  opacity: 0;
+  transform: scale(2.9);
+  filter: blur(14px);
+}
+
+.start-btn__wave {
+  position: absolute;
+  inset: -0.85rem;
+  border: 2px solid var(--chakra-bright);
+  border-radius: 999px;
+  opacity: 0;
+}
+
+.start-btn__label {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+}
+
+.is-playing .start-btn__ring {
+  animation:
+    ring-slam 540ms var(--ease-slam) 2500ms forwards,
+    ring-pulse 2.6s ease-out 3600ms infinite;
+}
+
+.is-playing .start-btn__plate {
+  animation: plate-in 420ms ease-out 2900ms forwards;
+}
+
+.is-playing .start-btn__label {
+  animation: label-in 380ms var(--ease-pop) 2980ms forwards;
+}
+
+.is-playing .start-btn__wave {
+  animation: wave-out 760ms ease-out 3000ms forwards;
+}
+
+@keyframes ring-slam {
+  to {
+    opacity: 1;
+    transform: scale(1);
     filter: blur(0);
   }
 }
 
-@keyframes kanji-breathe {
-  50% {
-    opacity: 0.75;
-  }
+@keyframes ring-pulse {
+  0% { opacity: 0.75; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.28); }
 }
 
-.hero__content {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.1rem;
-  width: min(100%, 42rem);
-  text-align: center;
+@keyframes plate-in {
+  to { opacity: 1; }
 }
 
-.hero__eyebrow,
-.hero__title span,
-.hero__tagline,
-.start-btn,
-.hero__status {
-  opacity: 0;
-  animation: rise-in 900ms var(--ease-slide) forwards;
+@keyframes label-in {
+  0% { opacity: 0; transform: scale(0.82); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
-.hero__eyebrow {
-  font-size: 0.8rem;
-  letter-spacing: 0.42em;
-  color: var(--chakra);
-  text-transform: uppercase;
-  animation-delay: 900ms;
+@keyframes wave-out {
+  0% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.3); }
 }
 
-.hero__title {
-  display: flex;
-  flex-direction: column;
-  font-family: var(--font-display);
-  font-size: clamp(3.2rem, 15vw, 7.5rem);
-  line-height: 0.88;
-  letter-spacing: 0.02em;
+.start-btn.is-armed {
+  animation: arm-glow 620ms ease-out;
 }
 
-.hero__title span:first-child {
-  color: var(--paper);
-  animation-delay: 1100ms;
-}
-
-.hero__title span:last-child {
-  color: transparent;
-  background: linear-gradient(180deg, var(--chakra-bright), var(--chakra-deep));
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation-delay: 1250ms;
-}
-
-.hero__tagline {
-  max-width: 34rem;
-  font-size: clamp(0.9rem, 2.6vw, 1.05rem);
-  line-height: 1.65;
-  color: var(--paper-dim);
-  animation-delay: 1450ms;
-}
-
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(1.6rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ---- Start control ---- */
-
-.start-btn {
-  position: relative;
-  margin-top: 0.6rem;
-  padding: 1.05rem 3.2rem;
-  font-family: var(--font-display);
-  font-size: clamp(1.05rem, 3.4vw, 1.4rem);
-  letter-spacing: 0.16em;
-  color: var(--ink-950);
-  background: linear-gradient(160deg, var(--chakra-bright), var(--chakra));
-  border-radius: 999px;
-  box-shadow: var(--glow-chakra), var(--shadow-lift);
-  animation-delay: 1650ms;
-  transition: transform 180ms var(--ease-pop), box-shadow 240ms ease, filter 240ms ease;
-}
-
-.start-btn[disabled] {
-  filter: grayscale(0.75) brightness(0.6);
+@keyframes arm-glow {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.06); }
+  100% { transform: scale(1); }
 }
 
 .start-btn:not([disabled]):hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 42px -2px var(--chakra), var(--shadow-lift);
+  transform: scale(1.045);
 }
 
 .start-btn:not([disabled]):active {
   transform: scale(0.97);
 }
 
-.start-btn__label {
-  position: relative;
-  z-index: 1;
-}
-
-/* Expanding chakra ring, only once the button is actually usable. */
-.start-btn__ring {
-  position: absolute;
-  inset: 0;
-  border: 2px solid var(--chakra);
-  border-radius: inherit;
-  opacity: 0;
-}
-
-.start-btn:not([disabled]) .start-btn__ring {
-  animation: ring-pulse 2.4s ease-out infinite;
-}
-
-@keyframes ring-pulse {
-  0% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-  70%,
-  100% {
-    opacity: 0;
-    transform: scale(1.35);
-  }
-}
-
-/* ---- Loading + record ---- */
+/* ---- loading ---- */
 
 .hero__status {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  width: min(100%, 22rem);
-  animation-delay: 1750ms;
+  width: min(100%, 20rem);
+  opacity: 0;
+}
+
+.is-playing .hero__status {
+  animation: rise-in 600ms ease 3200ms forwards;
 }
 
 .hero__status.is-done {
@@ -192,7 +297,7 @@
 
 .loading-bar {
   width: 100%;
-  height: 4px;
+  height: 3px;
   overflow: hidden;
   background: var(--ink-700);
   border-radius: 999px;
@@ -206,8 +311,8 @@
 }
 
 .loading-text {
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
   color: var(--paper-faint);
 }
 
@@ -215,31 +320,12 @@
   color: var(--gold);
 }
 
-.hero__best {
-  font-size: 0.82rem;
-  letter-spacing: 0.2em;
-  color: var(--paper-dim);
-}
-
-.hero__best strong {
-  color: var(--gold);
-}
-
-.hero__scroll-hint {
-  position: absolute;
-  right: 1.5rem;
-  bottom: 1.25rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.5em;
-  color: var(--ink-600);
-}
-
-@media (max-height: 620px) {
+@media (max-height: 600px) {
   .hero__content {
-    gap: 0.7rem;
+    gap: 0.75rem;
   }
 
-  .hero__tagline {
+  .hero__desc {
     display: none;
   }
 }

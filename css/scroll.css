@@ -1,0 +1,125 @@
+/*
+ * Open-scroll frame.
+ *
+ * Drawn entirely in CSS rather than shipped as artwork, so it re-colours with
+ * the tokens and stays crisp at any size: a washi panel between two turned
+ * wooden rods, with the paper curling into shadow where it meets them.
+ */
+
+.scroll {
+  position: relative;
+  padding: 0 20px;
+}
+
+.scroll__paper {
+  position: relative;
+  padding: 10px 12px;
+  background-color: var(--washi);
+  background-image:
+    /* damp staining */
+    radial-gradient(ellipse 40% 60% at 12% 22%, var(--washi-shade) 0%, transparent 62%),
+    radial-gradient(ellipse 34% 48% at 88% 78%, var(--washi-shade) 0%, transparent 58%),
+    /* paper fibre */
+    repeating-linear-gradient(92deg, transparent 0 3px, var(--washi-shade) 3px 4px),
+    repeating-linear-gradient(2deg, transparent 0 7px, var(--washi-edge) 7px 8px);
+  background-blend-mode: normal, normal, soft-light, soft-light;
+  border-top: 2px solid var(--washi-edge);
+  border-bottom: 2px solid var(--washi-edge);
+  box-shadow:
+    inset 0 0 30px -8px var(--washi-edge),
+    0 14px 30px -18px var(--ink-950);
+}
+
+/* Content sits above the curl shadows drawn on the paper. */
+.scroll__paper > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The paper rolling back into the rods. */
+.scroll__paper::before,
+.scroll__paper::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  z-index: 0;
+  width: 16px;
+  pointer-events: none;
+}
+
+.scroll__paper::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--washi-edge), transparent);
+}
+
+.scroll__paper::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--washi-edge), transparent);
+}
+
+.scroll__rod {
+  position: absolute;
+  top: -9px;
+  bottom: -9px;
+  z-index: 2;
+  width: 20px;
+  background: linear-gradient(
+    90deg,
+    var(--wood-dark) 0%,
+    var(--wood) 26%,
+    var(--wood-light) 46%,
+    var(--wood) 68%,
+    var(--wood-dark) 100%
+  );
+  border-radius: 10px;
+  box-shadow: 0 10px 24px -12px var(--ink-950);
+}
+
+.scroll__rod--left {
+  left: 0;
+}
+
+.scroll__rod--right {
+  right: 0;
+}
+
+/* Turned end caps. */
+.scroll__rod::before,
+.scroll__rod::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  height: 13px;
+  background: linear-gradient(
+    90deg,
+    var(--wood-dark) 0%,
+    var(--wood-light) 48%,
+    var(--wood-dark) 100%
+  );
+  border-radius: 7px;
+}
+
+.scroll__rod::before {
+  top: -5px;
+}
+
+.scroll__rod::after {
+  bottom: -5px;
+}
+
+@media (max-width: 420px) {
+  .scroll {
+    padding: 0 14px;
+  }
+
+  .scroll__rod {
+    width: 14px;
+    border-radius: 7px;
+  }
+
+  .scroll__paper {
+    padding: 8px;
+  }
+}

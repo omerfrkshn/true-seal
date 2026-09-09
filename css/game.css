@@ -1,79 +1,56 @@
-/* Game panel: HUD, the sequence screen, and the twelve seal buttons. */
+/* Game panel: HUD, the sequence scroll, the timer, and the twelve seal buttons. */
 
 .panel--game {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: clamp(0.5rem, 1.6vh, 1rem);
+  gap: clamp(0.45rem, 1.5vh, 0.9rem);
   padding: clamp(0.6rem, 2vw, 1.25rem);
-  background:
-    radial-gradient(circle at 50% 30%, var(--ink-850) 0%, var(--ink-950) 70%),
-    var(--ink-950);
+  background: var(--ink-950);
+  isolation: isolate;
 }
 
-/* ---- HUD ---- */
-
-.hud {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+.game__art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-position: center;
+  background-size: cover;
+  background-image:
+    radial-gradient(circle at 50% 22%, var(--ink-800) 0%, transparent 58%),
+    linear-gradient(180deg, var(--ink-900), var(--ink-950) 70%);
 }
 
-.hud__btn {
-  padding: 0.4rem 0.75rem;
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
-  color: var(--paper-dim);
-  border: 1px solid var(--ink-700);
-  border-radius: var(--radius-sm);
-  transition: color 180ms ease, border-color 180ms ease;
+/* Red squeeze at the panel edges while a streak is on the line. */
+.panel--game.has-art .game__art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--veil-soft) 0%, transparent 16%);
 }
 
-.hud__btn:hover {
-  color: var(--chakra-bright);
-  border-color: var(--chakra-deep);
+.game__stress {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  box-shadow: inset 0 0 130px 10px var(--blood);
+  opacity: 0;
+  pointer-events: none;
 }
 
-.hud__btn--icon {
-  min-width: 2.4rem;
+.panel--game.is-stress .game__stress {
+  animation: stress-pulse 620ms ease-in-out infinite;
 }
 
-.hud__icon {
-  font-size: 1rem;
-  color: var(--chakra);
+@keyframes stress-pulse {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.34; }
 }
 
-.hud__btn[aria-pressed='true'] .hud__icon {
-  color: var(--paper-faint);
-}
-
-.hud__stats {
-  display: flex;
-  gap: clamp(0.7rem, 3vw, 1.8rem);
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.1;
-}
-
-.stat__key {
-  font-size: 0.58rem;
-  letter-spacing: 0.24em;
-  color: var(--paper-faint);
-  text-transform: uppercase;
-}
-
-.stat__val {
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 4.4vw, 1.5rem);
-  color: var(--paper);
-}
-
-#stat-best {
-  color: var(--gold);
+.hud,
+.stage,
+.scroll--grid {
+  position: relative;
+  z-index: 2;
 }
 
 /* ---- Stage ---- */
@@ -84,79 +61,46 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
-  gap: clamp(0.5rem, 1.6vh, 0.9rem);
+  gap: clamp(0.45rem, 1.5vh, 0.85rem);
+}
+
+.scroll--screen {
+  flex: 0 1 auto;
+  width: min(100%, 32rem);
+  min-height: 0;
+}
+
+.scroll--screen .scroll__paper {
+  display: flex;
+  min-height: 0;
 }
 
 .seal-screen {
   position: relative;
-  flex: 0 1 auto;
-  width: min(100%, 34rem);
-  max-height: 100%;
-  min-height: 0;
+  flex: 1;
   aspect-ratio: 728 / 460;
+  min-height: 0;
   overflow: hidden;
-  background:
-    repeating-linear-gradient(
-      135deg,
-      var(--ink-850) 0 6px,
-      var(--ink-800) 6px 12px
-    );
-  border: 2px solid var(--ink-600);
-  border-radius: var(--radius-md);
-  box-shadow: inset 0 0 60px -10px var(--ink-950), var(--shadow-lift);
+  background: var(--washi-shade);
+  border: 2px solid var(--seal-red);
+  border-radius: 3px;
+  box-shadow: inset 0 0 22px -8px var(--sumi);
   transition: border-color 240ms ease, box-shadow 240ms ease;
 }
 
 .seal-screen.is-live {
   border-color: var(--chakra-deep);
-  box-shadow: inset 0 0 60px -10px var(--ink-950), 0 0 30px -8px var(--chakra);
+  box-shadow: inset 0 0 22px -8px var(--sumi), 0 0 26px -6px var(--chakra);
 }
 
 .seal-screen.is-success {
   border-color: var(--jade);
-  box-shadow: inset 0 0 60px -10px var(--ink-950), 0 0 34px -6px var(--jade);
+  box-shadow: inset 0 0 22px -8px var(--sumi), 0 0 30px -6px var(--jade);
 }
 
 .seal-screen.is-failed {
   border-color: var(--blood);
-  box-shadow: inset 0 0 60px -10px var(--ink-950), 0 0 30px -8px var(--blood);
-}
-
-/* Corner ticks — a scroll-frame feel without an image. */
-.seal-screen__corner {
-  position: absolute;
-  z-index: 2;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--chakra-deep);
-}
-
-.seal-screen__corner--tl {
-  top: 6px;
-  left: 6px;
-  border-right: 0;
-  border-bottom: 0;
-}
-
-.seal-screen__corner--tr {
-  top: 6px;
-  right: 6px;
-  border-bottom: 0;
-  border-left: 0;
-}
-
-.seal-screen__corner--bl {
-  bottom: 6px;
-  left: 6px;
-  border-top: 0;
-  border-right: 0;
-}
-
-.seal-screen__corner--br {
-  right: 6px;
-  bottom: 6px;
-  border-top: 0;
-  border-left: 0;
+  box-shadow: inset 0 0 22px -8px var(--sumi), 0 0 30px -6px var(--blood);
 }
 
 .seal-screen__img {
@@ -182,29 +126,28 @@
   }
 }
 
-.seal-screen__idle {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 0.72rem;
-  letter-spacing: 0.34em;
-  color: var(--paper-faint);
-  text-transform: uppercase;
+/* ---- Sequence progress, clock, replay ---- */
+
+.stage__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: min(100%, 32rem);
 }
 
-.seal-screen__idle[hidden] {
-  display: none;
+.stage__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 10px;
 }
-
-/* ---- Sequence progress ---- */
 
 .progress-dots {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
   justify-content: center;
-  min-height: 8px;
 }
 
 .dot {
@@ -229,27 +172,107 @@
   background: var(--blood);
 }
 
+.timer {
+  width: clamp(6rem, 26vw, 9rem);
+  height: 5px;
+  overflow: hidden;
+  background: var(--ink-700);
+  border-radius: 999px;
+}
+
+.timer__fill {
+  width: 100%;
+  height: 100%;
+  background: var(--jade);
+  border-radius: inherit;
+  transform-origin: left center;
+  transition: background-color 260ms ease;
+}
+
+.timer.is-guarded {
+  box-shadow: 0 0 12px -2px var(--chakra);
+}
+
+.timer.is-hot .timer__fill {
+  background: var(--gold);
+}
+
+.timer.is-lost .timer__fill {
+  background: var(--blood);
+}
+
+.stage__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
 .stage__hint {
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
   color: var(--paper-dim);
   text-align: center;
 }
 
-/* ---- Seal buttons ---- */
+.replay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--chakra-bright);
+  background: var(--veil-soft);
+  border: 1px solid var(--chakra-deep);
+  border-radius: 999px;
+  transition: color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.replay-btn:not([disabled]):hover {
+  color: var(--ink-950);
+  background: var(--chakra-bright);
+}
+
+.replay-btn[disabled] {
+  color: var(--paper-faint);
+  border-color: var(--ink-700);
+  opacity: 0.7;
+}
+
+.replay-btn__count {
+  min-width: 1.1rem;
+  padding: 0 0.25rem;
+  font-size: 0.66rem;
+  color: var(--ink-950);
+  background: var(--chakra-bright);
+  border-radius: 999px;
+  text-align: center;
+}
+
+.replay-btn[disabled] .replay-btn__count {
+  color: var(--paper-dim);
+  background: var(--ink-700);
+}
+
+/* ---- Seal buttons, laid out on the lower scroll ---- */
+
+.scroll--grid {
+  width: min(100%, 62rem);
+  margin: 0 auto;
+}
 
 .seal-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.3rem, 1.2vw, 0.6rem);
+  gap: clamp(0.28rem, 1.1vw, 0.5rem);
 }
 
 @media (min-width: 760px) {
   .seal-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    max-width: 62rem;
-    margin: 0 auto;
-    width: 100%;
   }
 }
 
@@ -257,20 +280,21 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--ink-800);
-  border: 1px solid var(--ink-700);
-  border-radius: var(--radius-sm);
-  transition: transform 130ms var(--ease-pop), border-color 180ms ease, box-shadow 180ms ease;
+  background: var(--washi);
+  border: 1px solid var(--washi-edge);
+  border-radius: 3px;
+  transition: transform 130ms var(--ease-pop), border-color 180ms ease,
+    box-shadow 180ms ease, opacity 180ms ease;
 }
 
 .seal-btn:not([disabled]):hover {
   transform: translateY(-3px);
-  border-color: var(--chakra);
-  box-shadow: 0 0 18px -6px var(--chakra);
+  border-color: var(--seal-red);
+  box-shadow: 0 0 16px -5px var(--seal-red);
 }
 
 .seal-btn[disabled] {
-  filter: saturate(0.55) brightness(0.68);
+  filter: grayscale(0.78) brightness(0.97);
 }
 
 .seal-btn__img {
@@ -280,11 +304,11 @@
 }
 
 .seal-btn__label {
-  padding: 0.28rem 0.15rem 0.32rem;
-  font-size: clamp(0.56rem, 2.2vw, 0.72rem);
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: var(--paper-dim);
+  padding: 0.24rem 0.15rem 0.28rem;
+  font-size: clamp(0.55rem, 2.1vw, 0.7rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--sumi);
   text-align: center;
 }
 
@@ -305,8 +329,8 @@
 }
 
 .seal-grid.is-error .seal-btn {
-  border-color: var(--blood-deep);
-  box-shadow: inset 0 0 24px -6px var(--blood);
+  border-color: var(--blood);
+  box-shadow: inset 0 0 20px -6px var(--blood);
 }
 
 @keyframes grid-shake {

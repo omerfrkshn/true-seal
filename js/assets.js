@@ -1,14 +1,15 @@
 /**
  * Everything is fetched and decoded before the game becomes playable, so a
- * sequence never stalls mid-playback waiting on a file.
+ * sequence never stalls mid-playback waiting on a file. The seal cut-outs ship
+ * at full resolution, which is the bulk of the wait.
  */
 const Preloader = (() => {
-  function loadImage(configure) {
+  function loadImage(src) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error(`Gorsel yuklenemedi: ${img.currentSrc || img.src}`));
-      configure(img);
+      img.onerror = () => reject(new Error(`Gorsel yuklenemedi: ${src}`));
+      img.src = src;
     });
   }
 
@@ -16,21 +17,14 @@ const Preloader = (() => {
     const list = [];
 
     SEALS.forEach((seal) => {
-      // Setting sizes before srcset lets the browser fetch the same candidate
-      // the <img> in the DOM will end up using, so nothing is downloaded twice.
-      list.push(() =>
-        loadImage((img) => {
-          img.sizes = SEAL_FLASH_SIZES;
-          img.srcset = sealPaths.pngSrcset(seal.id);
-          img.src = sealPaths.pngFallback(seal.id);
-        })
-      );
-      list.push(() => loadImage((img) => { img.src = sealPaths.color(seal.id); }));
+      list.push(() => loadImage(sealPaths.png(seal.id)));
+      list.push(() => loadImage(sealPaths.color(seal.id)));
     });
 
     if (AudioBus.init()) {
       clickSoundPaths.forEach((path, i) => list.push(() => AudioBus.load(`click:${i}`, path)));
       list.push(() => AudioBus.load('jutsu', JUTSU_SOUND_PATH));
+      list.push(() => AudioBus.load('countdown', COUNTDOWN_SOUND_PATH));
       SEALS.forEach((seal) => list.push(() => AudioBus.load(`name:${seal.id}`, sealPaths.nameAudio(seal))));
     }
 
@@ -64,5 +58,21 @@ const Preloader = (() => {
     return { total: list.length, failed };
   }
 
-  return { run };
+  /**
+   * Backdrops are optional by design: until the artwork exists the panels fall
+   * back to their procedural background, so a missing file is not a failure.
+   */
+  async function backgrounds() {
+    const entries = await Promise.all(
+      Object.entries(BACKGROUND_PATHS).map(([key, src]) =>
+        loadImage(src).then(
+          () => [key, src],
+          () => [key, null]
+        )
+      )
+    );
+    return Object.fromEntries(entries);
+  }
+
+  return { run, backgrounds };
 })();

@@ -3,17 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mühür Hafızası — On İki El Mührü Hafıza Oyunu</title>
-<meta name="description" content="On iki el mührünü ezberle ve aynı sırayla tekrar et. Her seviyede dizi uzar, gösterim hızlanır. Tarayıcıda oynanan kısa bir hafıza oyunu.">
-<meta name="theme-color" content="#0b0a0c">
-<meta property="og:title" content="Mühür Hafızası">
-<meta property="og:description" content="On iki el mührünü ezberle ve aynı sırayla tekrar et. Bir mühür şaşarsa jutsu bozulur.">
+<title>True Seal — El Mührü Hafıza Oyunu</title>
+<meta name="description" content="On iki el mührünü ezberle ve aynı sırayla ör. Dizi uzar, gösterim hızlanır, süre daralır. Kombo bozulmadan ne kadar ileri gidebilirsin?">
+<meta name="theme-color" content="#08070a">
+<meta property="og:title" content="True Seal">
+<meta property="og:description" content="Diziyi ezberle, mühürleri sırayla ör. Tek bir mühür şaşarsa jutsu bozulur.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/title.css">
 <link rel="stylesheet" href="css/landing.css">
+<link rel="stylesheet" href="css/scroll.css">
+<link rel="stylesheet" href="css/hud.css">
 <link rel="stylesheet" href="css/game.css">
 <link rel="stylesheet" href="css/overlays.css">
 </head>
@@ -22,16 +25,26 @@
 <div class="track" id="track">
 
   <section class="panel panel--hero" id="hero-panel" aria-label="Giriş">
-    <canvas class="hero__ink" id="ink-canvas" aria-hidden="true"></canvas>
-    <div class="hero__kanji" aria-hidden="true">忍</div>
+    <div class="hero__scene" id="hero-scene" aria-hidden="true">
+      <div class="hero__art" id="hero-art"></div>
+      <canvas class="hero__embers" id="ember-canvas"></canvas>
+      <div class="hero__haze" id="hero-haze"></div>
+      <div class="hero__torch" id="hero-torch"></div>
+    </div>
 
-    <div class="hero__content">
-      <p class="hero__eyebrow">十二の印 · On İki El Mührü</p>
-      <h1 class="hero__title"><span>MÜHÜR</span><span>HAFIZASI</span></h1>
-      <p class="hero__tagline">Diziyi izle, ezberle, aynı sırayla tekrar et.<br>Tek bir mühür şaşarsa jutsu bozulur.</p>
+    <div class="hero__content" id="hero-content">
+      <h1 class="hero__title" id="hero-title" data-text="TRUE SEAL">
+        <span class="sr-only">True Seal</span>
+      </h1>
+
+      <div class="hero__rule" aria-hidden="true"></div>
+
+      <p class="hero__desc">On iki el mührü. Diziyi ezberle, aynı sırayla ör.</p>
 
       <button class="start-btn" id="start-btn" type="button" disabled>
         <span class="start-btn__ring" aria-hidden="true"></span>
+        <span class="start-btn__wave" aria-hidden="true"></span>
+        <span class="start-btn__plate" aria-hidden="true"></span>
         <span class="start-btn__label">OYUNA BAŞLA</span>
       </button>
 
@@ -41,20 +54,20 @@
         </div>
         <p class="loading-text" id="loading-text">Mühürler hazırlanıyor… %0</p>
       </div>
-
-      <p class="hero__best" id="hero-best" hidden></p>
     </div>
-
-    <p class="hero__scroll-hint" aria-hidden="true">陰 · 陽</p>
   </section>
 
   <section class="panel panel--game" id="game-panel" aria-label="Oyun alanı">
+    <div class="game__art" id="game-art" aria-hidden="true"></div>
+    <div class="game__stress" aria-hidden="true"></div>
+
     <header class="hud">
       <button class="hud__btn" id="back-btn" type="button">← Ana Menü</button>
       <div class="hud__stats">
         <p class="stat"><span class="stat__key">Seviye</span><span class="stat__val" id="stat-level">1</span></p>
         <p class="stat"><span class="stat__key">Mühür</span><span class="stat__val" id="stat-length">3</span></p>
-        <p class="stat"><span class="stat__key">Rekor</span><span class="stat__val" id="stat-best">0</span></p>
+        <p class="stat stat--score"><span class="stat__key">Puan</span><span class="stat__val" id="stat-score">0</span></p>
+        <p class="combo-chip" id="combo-chip" hidden>KOMBO<span class="combo-chip__val" id="combo-value">0</span></p>
       </div>
       <button class="hud__btn hud__btn--icon" id="mute-btn" type="button" aria-pressed="false" title="Sesi kapat">
         <span class="hud__icon" id="mute-icon" aria-hidden="true">◉</span>
@@ -63,20 +76,40 @@
     </header>
 
     <div class="stage">
-      <div class="seal-screen" id="seal-screen">
-        <span class="seal-screen__corner seal-screen__corner--tl" aria-hidden="true"></span>
-        <span class="seal-screen__corner seal-screen__corner--tr" aria-hidden="true"></span>
-        <span class="seal-screen__corner seal-screen__corner--bl" aria-hidden="true"></span>
-        <span class="seal-screen__corner seal-screen__corner--br" aria-hidden="true"></span>
-        <img class="seal-screen__img" id="seal-screen-img" alt="" hidden>
-        <p class="seal-screen__idle" id="seal-screen-idle">Mühür Dizisi Ekranı</p>
+      <div class="scroll scroll--screen">
+        <span class="scroll__rod scroll__rod--left" aria-hidden="true"></span>
+        <span class="scroll__rod scroll__rod--right" aria-hidden="true"></span>
+        <div class="scroll__paper">
+          <div class="seal-screen" id="seal-screen">
+            <img class="seal-screen__img" id="seal-screen-img" alt="" hidden>
+          </div>
+        </div>
       </div>
 
-      <div class="progress-dots" id="progress-dots" aria-hidden="true"></div>
-      <p class="stage__hint" id="stage-hint" role="status">Diziyi bekle.</p>
+      <div class="stage__meta">
+        <div class="stage__bar">
+          <div class="progress-dots" id="progress-dots" aria-hidden="true"></div>
+          <div class="timer" id="timer" hidden aria-hidden="true">
+            <div class="timer__fill" id="timer-fill"></div>
+          </div>
+        </div>
+        <div class="stage__row">
+          <p class="stage__hint" id="stage-hint" role="status">Diziyi bekle.</p>
+          <button class="replay-btn" id="replay-btn" type="button" disabled>
+            Tekrar Göster
+            <span class="replay-btn__count" id="replay-count">3</span>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="seal-grid" id="seal-grid" role="group" aria-label="El mühürleri"></div>
+    <div class="scroll scroll--grid">
+      <span class="scroll__rod scroll__rod--left" aria-hidden="true"></span>
+      <span class="scroll__rod scroll__rod--right" aria-hidden="true"></span>
+      <div class="scroll__paper">
+        <div class="seal-grid" id="seal-grid" role="group" aria-label="El mühürleri"></div>
+      </div>
+    </div>
 
     <div class="game__overlay" id="game-overlay" aria-hidden="true" hidden>
       <p class="game__overlay-text" id="overlay-text"></p>
@@ -92,16 +125,33 @@
       </div>
     </div>
 
+    <p class="score-pop" id="score-pop" aria-hidden="true"></p>
+
+    <div class="combo-burst" id="combo-burst" aria-hidden="true" data-heat="2">
+      <span class="combo-burst__ring"></span>
+      <span class="combo-burst__ring combo-burst__ring--late"></span>
+      <p class="combo-burst__text" id="combo-text"></p>
+    </div>
+
     <div class="gameover" id="gameover" hidden>
       <div class="gameover__card" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
         <p class="gameover__kanji" aria-hidden="true">解</p>
         <h2 class="gameover__title" id="gameover-title">MÜHÜR BOZULDU</h2>
         <p class="gameover__body">Sıradaki mühür <strong id="gameover-correct">—</strong> olmalıydı.</p>
+
         <p class="gameover__score">
-          <span class="gameover__score-key">Ulaşılan seviye</span>
-          <strong class="gameover__score-val" id="gameover-level">1</strong>
+          <span class="gameover__score-key">Puan</span>
+          <strong class="gameover__score-val" id="gameover-score">0</strong>
         </p>
+
+        <dl class="gameover__stats">
+          <div><dt>Seviye</dt><dd id="gameover-level">1</dd></div>
+          <div><dt>En uzun kombo</dt><dd id="gameover-combo">0</dd></div>
+          <div><dt>Rekor</dt><dd id="gameover-best">0</dd></div>
+        </dl>
+
         <p class="gameover__record" id="gameover-record" hidden>Yeni rekor!</p>
+
         <div class="gameover__actions">
           <button class="btn btn--primary" id="retry-btn" type="button">Tekrar Dene</button>
           <button class="btn btn--ghost" id="menu-btn" type="button">Ana Menü</button>
@@ -113,6 +163,7 @@
 </div>
 
 <script src="js/seals.js"></script>
+<script src="js/rules.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/assets.js"></script>
 <script src="js/game.js"></script>
