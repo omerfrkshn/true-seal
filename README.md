@@ -65,10 +65,11 @@ Panel değişince araya 900 ms'lik çapraz geçiş giriyor, kesme yok. Müzik ke
 alt yoluna bağlı ve efektlerin altında kalsın diye seviyesi düşük tutulmuş
 (`MUSIC_LEVEL`, `js/audio.js`).
 
-Tarayıcılar sayfa bir kullanıcı hareketi görmeden ses çalmaya izin vermiyor, bu
-yüzden açılış müziği ilk tıklama veya tuş basımını bekliyor — nereye olursa.
-Müzik dosyaları da engelleyici ön yüklemeye girmiyor; birkaç megabayt oldukları
-için arkada yüklenip hazır olunca giriyorlar, "Oyuna Başla" onları beklemiyor.
+Açılış müziği dosyalar çözülür çözülmez başlıyor, tıklama beklemiyor. Tarayıcı
+otomatik oynatmayı engelliyorsa kaynak yine de kuruluyor ve bağlam açıldığı anda
+baştan çalıyor; bu durumda sayfaya ilk dokunuş sesi açıyor. Müzik dosyaları
+engelleyici ön yüklemeye girmiyor; birkaç megabayt oldukları için arkada
+yüklenip hazır olunca giriyorlar, "Oyuna Başla" onları beklemiyor.
 
 Buton sesleri:
 
@@ -173,6 +174,9 @@ assets/
   audio/ui        geri sayım, başlangıç sesleri, mühür bozuldu sesi
   audio/music     açılış ve oyun ekranı döngüleri
   bg              arka plan görselleri (isteğe bağlı)
+  favicon.svg     sekme ikonu (kod içinde çizilmiş çakra spirali)
+  icon-180.png    iOS ana ekran ikonu
+  og-image.jpg    paylaşım önizleme görseli
   cursor          kunai imleci
   fonts           başlık ve geri sayım fontu + lisansı
 ```

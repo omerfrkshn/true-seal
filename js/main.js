@@ -34,7 +34,6 @@
   let loadProgress = 0;
   let loadFailures = 0;
   let musicReady = false;
-  let musicArmed = false;
 
   /* ---- title ---- */
 
@@ -208,32 +207,31 @@
     return onGamePanel ? 'music:game' : 'music:hero';
   }
 
-  /** Needs both halves: the files decoded, and a gesture to unblock playback. */
+  /**
+   * Started as soon as the files are decoded, without waiting for a gesture.
+   * A source started on a suspended context is not wasted — it plays from the
+   * top the moment the browser lets the context run.
+   */
   function tryMusic() {
-    if (!musicReady || !musicArmed) return;
+    if (!musicReady) return;
+    AudioBus.unlock();
     AudioBus.playMusic(currentTrack());
   }
 
   /**
-   * Autoplay stays blocked until the page has seen a real gesture, so the
-   * landing theme waits for the first one — a click anywhere will do.
+   * Fallback for browsers that keep audio blocked until the page has been
+   * touched: the first gesture resumes the context and the track picks up.
+   * `click` is in the list because it is the only one a synthetic or
+   * assistive-tech activation is guaranteed to produce.
    */
   function armMusic() {
-    // `click` is in the list too: it is the only one a synthetic or
-    // assistive-tech activation is guaranteed to produce.
     const events = ['pointerdown', 'keydown', 'click'];
 
     const kick = () => {
       events.forEach((name) => document.removeEventListener(name, kick, true));
-      musicArmed = true;
       AudioBus.unlock();
       tryMusic();
     };
-
-    if (AudioBus.state() === 'running') {
-      kick();
-      return;
-    }
 
     events.forEach((name) => document.addEventListener(name, kick, true));
   }
@@ -326,18 +324,21 @@
     buildTitle();
     Game.mount({ onExit: () => setActivePanel(false) });
     gamePanel.inert = true;
+    // Before applyMute, so a remembered mute reaches the master gain itself
+    // rather than only the flag that guards the one-shots.
+    AudioBus.init();
     applyMute(readMute());
     embers.play();
     parallax.enable();
     heroPanel.classList.add('is-playing');
 
-    // Backdrops are optional, so they are applied whenever they turn up.
     armMusic();
     Preloader.music().then((ok) => {
       musicReady = ok;
       tryMusic();
     });
 
+    // Backdrops are optional, so they are applied whenever they turn up.
     Preloader.backgrounds().then((art) => {
       if (art.hero) {
         heroArt.style.backgroundImage = `url("${art.hero}")`;

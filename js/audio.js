@@ -31,7 +31,7 @@ const AudioBus = (() => {
     if (!Ctor) return null;
     ctx = new Ctor();
     master = ctx.createGain();
-    master.gain.value = 1;
+    master.gain.value = muted ? 0 : 1;
     master.connect(ctx.destination);
     musicBus = ctx.createGain();
     musicBus.gain.value = MUSIC_LEVEL;
