@@ -1,0 +1,245 @@
+/* Landing panel: ink field, kanji reveal, title, start control. */
+
+.panel--hero {
+  display: grid;
+  place-items: center;
+  padding: 2rem 1.25rem;
+  background:
+    radial-gradient(circle at 50% 42%, var(--ink-800) 0%, var(--ink-950) 62%),
+    var(--ink-950);
+}
+
+.hero__ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+}
+
+.hero__kanji {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(18rem, 58vmin, 40rem);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 3px var(--chakra-deep);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1.35);
+  filter: blur(18px);
+  animation: kanji-settle 2200ms var(--ease-slide) 200ms forwards, kanji-breathe 7s ease-in-out 2400ms infinite;
+}
+
+@keyframes kanji-settle {
+  to {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes kanji-breathe {
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.hero__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  width: min(100%, 42rem);
+  text-align: center;
+}
+
+.hero__eyebrow,
+.hero__title span,
+.hero__tagline,
+.start-btn,
+.hero__status {
+  opacity: 0;
+  animation: rise-in 900ms var(--ease-slide) forwards;
+}
+
+.hero__eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.42em;
+  color: var(--chakra);
+  text-transform: uppercase;
+  animation-delay: 900ms;
+}
+
+.hero__title {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-display);
+  font-size: clamp(3.2rem, 15vw, 7.5rem);
+  line-height: 0.88;
+  letter-spacing: 0.02em;
+}
+
+.hero__title span:first-child {
+  color: var(--paper);
+  animation-delay: 1100ms;
+}
+
+.hero__title span:last-child {
+  color: transparent;
+  background: linear-gradient(180deg, var(--chakra-bright), var(--chakra-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation-delay: 1250ms;
+}
+
+.hero__tagline {
+  max-width: 34rem;
+  font-size: clamp(0.9rem, 2.6vw, 1.05rem);
+  line-height: 1.65;
+  color: var(--paper-dim);
+  animation-delay: 1450ms;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Start control ---- */
+
+.start-btn {
+  position: relative;
+  margin-top: 0.6rem;
+  padding: 1.05rem 3.2rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 3.4vw, 1.4rem);
+  letter-spacing: 0.16em;
+  color: var(--ink-950);
+  background: linear-gradient(160deg, var(--chakra-bright), var(--chakra));
+  border-radius: 999px;
+  box-shadow: var(--glow-chakra), var(--shadow-lift);
+  animation-delay: 1650ms;
+  transition: transform 180ms var(--ease-pop), box-shadow 240ms ease, filter 240ms ease;
+}
+
+.start-btn[disabled] {
+  filter: grayscale(0.75) brightness(0.6);
+}
+
+.start-btn:not([disabled]):hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 42px -2px var(--chakra), var(--shadow-lift);
+}
+
+.start-btn:not([disabled]):active {
+  transform: scale(0.97);
+}
+
+.start-btn__label {
+  position: relative;
+  z-index: 1;
+}
+
+/* Expanding chakra ring, only once the button is actually usable. */
+.start-btn__ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--chakra);
+  border-radius: inherit;
+  opacity: 0;
+}
+
+.start-btn:not([disabled]) .start-btn__ring {
+  animation: ring-pulse 2.4s ease-out infinite;
+}
+
+@keyframes ring-pulse {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+/* ---- Loading + record ---- */
+
+.hero__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(100%, 22rem);
+  animation-delay: 1750ms;
+}
+
+.hero__status.is-done {
+  visibility: hidden;
+}
+
+.loading-bar {
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  background: var(--ink-700);
+  border-radius: 999px;
+}
+
+.loading-bar__fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--chakra-deep), var(--chakra-bright));
+  transition: width 220ms ease;
+}
+
+.loading-text {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  color: var(--paper-faint);
+}
+
+.loading-text.is-warning {
+  color: var(--gold);
+}
+
+.hero__best {
+  font-size: 0.82rem;
+  letter-spacing: 0.2em;
+  color: var(--paper-dim);
+}
+
+.hero__best strong {
+  color: var(--gold);
+}
+
+.hero__scroll-hint {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.5em;
+  color: var(--ink-600);
+}
+
+@media (max-height: 620px) {
+  .hero__content {
+    gap: 0.7rem;
+  }
+
+  .hero__tagline {
+    display: none;
+  }
+}

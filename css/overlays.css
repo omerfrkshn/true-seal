@@ -1,0 +1,284 @@
+/* Layers that sit on top of the game panel: countdown cue, click flash, game over. */
+
+/* ---- Countdown / "Ezberle!" cue ---- */
+
+.game__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, var(--veil-soft), var(--veil-strong));
+}
+
+.game__overlay[hidden] {
+  display: none;
+}
+
+.game__overlay-text {
+  font-family: var(--font-display);
+  line-height: 1;
+  text-align: center;
+}
+
+.game__overlay-text.is-count {
+  font-size: clamp(7rem, 34vmin, 18rem);
+  color: var(--chakra);
+  text-shadow: 0 0 60px var(--chakra-deep);
+  animation: count-pop 780ms var(--ease-slide) forwards;
+}
+
+.game__overlay-text.is-cue {
+  font-size: clamp(2.6rem, 13vmin, 6rem);
+  letter-spacing: 0.14em;
+  color: var(--paper);
+  text-shadow: 0 0 40px var(--chakra);
+  animation: cue-flash 800ms var(--ease-slide) forwards;
+}
+
+@keyframes count-pop {
+  0% {
+    opacity: 0;
+    transform: scale(2.1);
+    filter: blur(14px);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+}
+
+@keyframes cue-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+/* ---- Click flash: cut-out seal + its Japanese name ---- */
+
+.seal-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.seal-flash.is-firing {
+  animation: flash-life 560ms ease-out;
+}
+
+/* The name is placed against the image box, not the panel. */
+.seal-flash__inner {
+  position: relative;
+}
+
+.seal-flash__img {
+  width: clamp(11rem, 62vw, 21.25rem);
+  filter: drop-shadow(0 12px 26px var(--ink-950)) drop-shadow(0 0 44px var(--chakra-deep));
+}
+
+.seal-flash__name {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  padding: 0.3rem 1.15rem 0.4rem;
+  white-space: nowrap;
+  background: var(--veil);
+  border: 1px solid var(--chakra-deep);
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.seal-flash__kana {
+  font-size: clamp(1.5rem, 7vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--paper);
+}
+
+.seal-flash__romaji {
+  font-family: var(--font-display);
+  font-size: clamp(0.85rem, 3.4vw, 1.15rem);
+  letter-spacing: 0.34em;
+  color: var(--chakra-bright);
+  text-transform: uppercase;
+}
+
+@keyframes flash-life {
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+
+/* ---- Game over ---- */
+
+.gameover {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: var(--veil);
+  backdrop-filter: blur(6px);
+  animation: fade-in 320ms ease;
+}
+
+.gameover[hidden] {
+  display: none;
+}
+
+.gameover__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  width: min(100%, 26rem);
+  padding: clamp(1.5rem, 6vw, 2.5rem) clamp(1.25rem, 5vw, 2.25rem);
+  overflow: hidden;
+  text-align: center;
+  background: linear-gradient(165deg, var(--ink-800), var(--ink-900));
+  border: 1px solid var(--blood-deep);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lift), 0 0 50px -20px var(--blood);
+  animation: card-in 420ms var(--ease-pop);
+}
+
+.gameover__kanji {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  font-size: 10rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--blood-deep);
+  opacity: 0.11;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.gameover__card > *:not(.gameover__kanji) {
+  position: relative;
+  z-index: 1;
+}
+
+.gameover__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  letter-spacing: 0.08em;
+  color: var(--blood);
+}
+
+.gameover__body {
+  font-size: 0.86rem;
+  color: var(--paper-dim);
+}
+
+.gameover__body strong {
+  color: var(--paper);
+}
+
+.gameover__score {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.25rem;
+}
+
+.gameover__score-key {
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  color: var(--paper-faint);
+  text-transform: uppercase;
+}
+
+.gameover__score-val {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 16vw, 4.5rem);
+  line-height: 1;
+  color: var(--chakra);
+}
+
+.gameover__record {
+  padding: 0.25rem 0.9rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  color: var(--ink-950);
+  background: var(--gold);
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.gameover__record[hidden] {
+  display: none;
+}
+
+.gameover__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(2rem) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.game__overlay-text.is-jutsu {
+  color: var(--jade);
+  text-shadow: 0 0 44px var(--jade);
+}

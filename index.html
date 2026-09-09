@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mühür Hafızası — On İki El Mührü Hafıza Oyunu</title>
+<meta name="description" content="On iki el mührünü ezberle ve aynı sırayla tekrar et. Her seviyede dizi uzar, gösterim hızlanır. Tarayıcıda oynanan kısa bir hafıza oyunu.">
+<meta name="theme-color" content="#0b0a0c">
+<meta property="og:title" content="Mühür Hafızası">
+<meta property="og:description" content="On iki el mührünü ezberle ve aynı sırayla tekrar et. Bir mühür şaşarsa jutsu bozulur.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/landing.css">
+<link rel="stylesheet" href="css/game.css">
+<link rel="stylesheet" href="css/overlays.css">
+</head>
+<body>
+
+<div class="track" id="track">
+
+  <section class="panel panel--hero" id="hero-panel" aria-label="Giriş">
+    <canvas class="hero__ink" id="ink-canvas" aria-hidden="true"></canvas>
+    <div class="hero__kanji" aria-hidden="true">忍</div>
+
+    <div class="hero__content">
+      <p class="hero__eyebrow">十二の印 · On İki El Mührü</p>
+      <h1 class="hero__title"><span>MÜHÜR</span><span>HAFIZASI</span></h1>
+      <p class="hero__tagline">Diziyi izle, ezberle, aynı sırayla tekrar et.<br>Tek bir mühür şaşarsa jutsu bozulur.</p>
+
+      <button class="start-btn" id="start-btn" type="button" disabled>
+        <span class="start-btn__ring" aria-hidden="true"></span>
+        <span class="start-btn__label">OYUNA BAŞLA</span>
+      </button>
+
+      <div class="hero__status" id="hero-status">
+        <div class="loading-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Varlıklar yükleniyor">
+          <div class="loading-bar__fill" id="loading-fill"></div>
+        </div>
+        <p class="loading-text" id="loading-text">Mühürler hazırlanıyor… %0</p>
+      </div>
+
+      <p class="hero__best" id="hero-best" hidden></p>
+    </div>
+
+    <p class="hero__scroll-hint" aria-hidden="true">陰 · 陽</p>
+  </section>
+
+  <section class="panel panel--game" id="game-panel" aria-label="Oyun alanı">
+    <header class="hud">
+      <button class="hud__btn" id="back-btn" type="button">← Ana Menü</button>
+      <div class="hud__stats">
+        <p class="stat"><span class="stat__key">Seviye</span><span class="stat__val" id="stat-level">1</span></p>
+        <p class="stat"><span class="stat__key">Mühür</span><span class="stat__val" id="stat-length">3</span></p>
+        <p class="stat"><span class="stat__key">Rekor</span><span class="stat__val" id="stat-best">0</span></p>
+      </div>
+      <button class="hud__btn hud__btn--icon" id="mute-btn" type="button" aria-pressed="false" title="Sesi kapat">
+        <span class="hud__icon" id="mute-icon" aria-hidden="true">◉</span>
+        <span class="sr-only">Sesi kapat</span>
+      </button>
+    </header>
+
+    <div class="stage">
+      <div class="seal-screen" id="seal-screen">
+        <span class="seal-screen__corner seal-screen__corner--tl" aria-hidden="true"></span>
+        <span class="seal-screen__corner seal-screen__corner--tr" aria-hidden="true"></span>
+        <span class="seal-screen__corner seal-screen__corner--bl" aria-hidden="true"></span>
+        <span class="seal-screen__corner seal-screen__corner--br" aria-hidden="true"></span>
+        <img class="seal-screen__img" id="seal-screen-img" alt="" hidden>
+        <p class="seal-screen__idle" id="seal-screen-idle">Mühür Dizisi Ekranı</p>
+      </div>
+
+      <div class="progress-dots" id="progress-dots" aria-hidden="true"></div>
+      <p class="stage__hint" id="stage-hint" role="status">Diziyi bekle.</p>
+    </div>
+
+    <div class="seal-grid" id="seal-grid" role="group" aria-label="El mühürleri"></div>
+
+    <div class="game__overlay" id="game-overlay" aria-hidden="true" hidden>
+      <p class="game__overlay-text" id="overlay-text"></p>
+    </div>
+
+    <div class="seal-flash" id="seal-flash" aria-hidden="true">
+      <div class="seal-flash__inner">
+        <img class="seal-flash__img" id="seal-flash-img" alt="">
+        <p class="seal-flash__name">
+          <span class="seal-flash__kana" id="flash-kana"></span>
+          <span class="seal-flash__romaji" id="flash-romaji"></span>
+        </p>
+      </div>
+    </div>
+
+    <div class="gameover" id="gameover" hidden>
+      <div class="gameover__card" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
+        <p class="gameover__kanji" aria-hidden="true">解</p>
+        <h2 class="gameover__title" id="gameover-title">MÜHÜR BOZULDU</h2>
+        <p class="gameover__body">Sıradaki mühür <strong id="gameover-correct">—</strong> olmalıydı.</p>
+        <p class="gameover__score">
+          <span class="gameover__score-key">Ulaşılan seviye</span>
+          <strong class="gameover__score-val" id="gameover-level">1</strong>
+        </p>
+        <p class="gameover__record" id="gameover-record" hidden>Yeni rekor!</p>
+        <div class="gameover__actions">
+          <button class="btn btn--primary" id="retry-btn" type="button">Tekrar Dene</button>
+          <button class="btn btn--ghost" id="menu-btn" type="button">Ana Menü</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="js/seals.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+/* Game panel: HUD, the sequence screen, and the twelve seal buttons. */
+
+.panel--game {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(0.5rem, 1.6vh, 1rem);
+  padding: clamp(0.6rem, 2vw, 1.25rem);
+  background:
+    radial-gradient(circle at 50% 30%, var(--ink-850) 0%, var(--ink-950) 70%),
+    var(--ink-950);
+}
+
+/* ---- HUD ---- */
+
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.hud__btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: var(--paper-dim);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--radius-sm);
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.hud__btn:hover {
+  color: var(--chakra-bright);
+  border-color: var(--chakra-deep);
+}
+
+.hud__btn--icon {
+  min-width: 2.4rem;
+}
+
+.hud__icon {
+  font-size: 1rem;
+  color: var(--chakra);
+}
+
+.hud__btn[aria-pressed='true'] .hud__icon {
+  color: var(--paper-faint);
+}
+
+.hud__stats {
+  display: flex;
+  gap: clamp(0.7rem, 3vw, 1.8rem);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.stat__key {
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+  color: var(--paper-faint);
+  text-transform: uppercase;
+}
+
+.stat__val {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 4.4vw, 1.5rem);
+  color: var(--paper);
+}
+
+#stat-best {
+  color: var(--gold);
+}
+
+/* ---- Stage ---- */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  gap: clamp(0.5rem, 1.6vh, 0.9rem);
+}
+
+.seal-screen {
+  position: relative;
+  flex: 0 1 auto;
+  width: min(100%, 34rem);
+  max-height: 100%;
+  min-height: 0;
+  aspect-ratio: 728 / 460;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      var(--ink-850) 0 6px,
+      var(--ink-800) 6px 12px
+    );
+  border: 2px solid var(--ink-600);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 60px -10px var(--ink-950), var(--shadow-lift);
+  transition: border-color 240ms ease, box-shadow 240ms ease;
+}
+
+.seal-screen.is-live {
+  border-color: var(--chakra-deep);
+  box-shadow: inset 0 0 60px -10px var(--ink-950), 0 0 30px -8px var(--chakra);
+}
+
+.seal-screen.is-success {
+  border-color: var(--jade);
+  box-shadow: inset 0 0 60px -10px var(--ink-950), 0 0 34px -6px var(--jade);
+}
+
+.seal-screen.is-failed {
+  border-color: var(--blood);
+  box-shadow: inset 0 0 60px -10px var(--ink-950), 0 0 30px -8px var(--blood);
+}
+
+/* Corner ticks — a scroll-frame feel without an image. */
+.seal-screen__corner {
+  position: absolute;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--chakra-deep);
+}
+
+.seal-screen__corner--tl {
+  top: 6px;
+  left: 6px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.seal-screen__corner--tr {
+  top: 6px;
+  right: 6px;
+  border-bottom: 0;
+  border-left: 0;
+}
+
+.seal-screen__corner--bl {
+  bottom: 6px;
+  left: 6px;
+  border-top: 0;
+  border-right: 0;
+}
+
+.seal-screen__corner--br {
+  right: 6px;
+  bottom: 6px;
+  border-top: 0;
+  border-left: 0;
+}
+
+.seal-screen__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.seal-screen__img.is-shown {
+  animation: seal-strike 260ms var(--ease-pop);
+}
+
+@keyframes seal-strike {
+  0% {
+    opacity: 0.2;
+    transform: scale(1.08);
+    filter: brightness(1.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.seal-screen__idle {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.34em;
+  color: var(--paper-faint);
+  text-transform: uppercase;
+}
+
+.seal-screen__idle[hidden] {
+  display: none;
+}
+
+/* ---- Sequence progress ---- */
+
+.progress-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  min-height: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: var(--ink-600);
+  border-radius: 2px;
+  transform: rotate(45deg);
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.dot.is-active {
+  background: var(--chakra);
+  transform: rotate(45deg) scale(1.35);
+}
+
+.dot.is-done {
+  background: var(--jade);
+}
+
+.dot.is-wrong {
+  background: var(--blood);
+}
+
+.stage__hint {
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  color: var(--paper-dim);
+  text-align: center;
+}
+
+/* ---- Seal buttons ---- */
+
+.seal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.3rem, 1.2vw, 0.6rem);
+}
+
+@media (min-width: 760px) {
+  .seal-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    max-width: 62rem;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+.seal-btn {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--ink-800);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--radius-sm);
+  transition: transform 130ms var(--ease-pop), border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.seal-btn:not([disabled]):hover {
+  transform: translateY(-3px);
+  border-color: var(--chakra);
+  box-shadow: 0 0 18px -6px var(--chakra);
+}
+
+.seal-btn[disabled] {
+  filter: saturate(0.55) brightness(0.68);
+}
+
+.seal-btn__img {
+  width: 100%;
+  aspect-ratio: 728 / 460;
+  object-fit: cover;
+}
+
+.seal-btn__label {
+  padding: 0.28rem 0.15rem 0.32rem;
+  font-size: clamp(0.56rem, 2.2vw, 0.72rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--paper-dim);
+  text-align: center;
+}
+
+.seal-btn.is-hit {
+  border-color: var(--jade);
+  box-shadow: 0 0 22px -4px var(--jade);
+  transform: translateY(-2px) scale(0.97);
+}
+
+.seal-btn.is-miss {
+  border-color: var(--blood);
+  box-shadow: 0 0 22px -2px var(--blood);
+}
+
+/* Every button flinches when the sequence breaks. */
+.seal-grid.is-error {
+  animation: grid-shake 400ms ease;
+}
+
+.seal-grid.is-error .seal-btn {
+  border-color: var(--blood-deep);
+  box-shadow: inset 0 0 24px -6px var(--blood);
+}
+
+@keyframes grid-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-9px); }
+  30% { transform: translateX(8px); }
+  45% { transform: translateX(-6px); }
+  60% { transform: translateX(5px); }
+  80% { transform: translateX(-2px); }
+}
