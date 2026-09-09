@@ -1,6 +1,6 @@
 # True Seal
 
-**Canlı:** https://omerfrkshn.github.io/true-seal/
+**Canlı:** https://true-seal.vercel.app/
 
 Tarayıcıda oynanan bir hafıza oyunu. Her seviyede rastgele bir el mührü dizisi
 gösteriliyor; diziyi ezberleyip aynı sırayla örmen gerekiyor. Dizi uzadıkça,
@@ -146,10 +146,10 @@ Sonra `http://127.0.0.1:8123` adresini aç.
 
 Statik dosyalar, build komutu yok, çıktı dizini reponun kökü.
 
-Şu an GitHub Pages üzerinde (`main` dalının kökünden). `main`'e her push
-otomatik yayına gidiyor. Vercel veya Netlify'a taşımak istersen repoyu bağlaman
-yeterli — build ayarı gerekmiyor. Tüm varlık yolları göreli olduğu için site
-hem alt dizinde hem kök alan adında çalışır.
+Vercel üzerinde, GitHub reposuna bağlı (`main` dalı). `main`'e her push
+otomatik olarak üretime deploy oluyor. Build ayarı yok — statik dosyalar
+olduğu gibi sunuluyor. Tüm varlık yolları göreli olduğu için site hem alt
+dizinde hem kök alan adında çalışır.
 
 ## Dosya yapısı
 
